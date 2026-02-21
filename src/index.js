@@ -1769,6 +1769,10 @@ client.on('interactionCreate', async (interaction) => {
 }
 
 async function startBot() {
+  if (!BOT_TOKEN) {
+    return { success: false, message: 'Missing BOT_TOKEN in env. Set Railway variable BOT_TOKEN first.' };
+  }
+
   if (client && client.isReady()) {
     console.log('Bot is already running');
     return { success: false, message: 'Bot is already online' };
@@ -1833,28 +1837,28 @@ async function restartBot() {
   }
 }
 
-if (!BOT_TOKEN) {
-  throw new Error('Missing BOT_TOKEN in env.');
-}
-
 // Initialize the client (bot auto-starts on server launch)
 // This ensures the bot is always online when Railway/server restarts
-client = createClient();
-setupBotHandlers();
+if (BOT_TOKEN) {
+  client = createClient();
+  setupBotHandlers();
 
-// Auto-start bot on server launch (default behavior)
-const shouldAutoStart = process.env.AUTO_START !== 'false';
+  // Auto-start bot on server launch (default behavior)
+  const shouldAutoStart = process.env.AUTO_START !== 'false';
 
-if (shouldAutoStart) {
-  client.login(BOT_TOKEN).then(() => {
-    console.log('Bot auto-started on server launch');
-    autoStarted = true;
-  }).catch((error) => {
-    console.error('Failed to auto-start bot:', error);
-    autoStarted = false;
-  });
+  if (shouldAutoStart) {
+    client.login(BOT_TOKEN).then(() => {
+      console.log('Bot auto-started on server launch');
+      autoStarted = true;
+    }).catch((error) => {
+      console.error('Failed to auto-start bot:', error);
+      autoStarted = false;
+    });
+  } else {
+    console.log('Auto-start disabled. Use web interface to start bot.');
+  }
 } else {
-  console.log('Auto-start disabled. Use web interface to start bot.');
+  console.warn('BOT_TOKEN is missing. Web dashboard is online, bot login is disabled until BOT_TOKEN is configured.');
 }
 
 // Express Web Server
@@ -1866,7 +1870,7 @@ app.use(express.static(path.join(__dirname, '..', 'dist')));
 
 // API: Health check
 app.get('/api/health', (req, res) => {
-  res.json({ ok: true, service: 'crystal-stock-tickets-bot' });
+  res.json({ ok: true, service: 'crystal-stock-tickets-bot', botConfigured: Boolean(BOT_TOKEN) });
 });
 
 // API: Bot status
