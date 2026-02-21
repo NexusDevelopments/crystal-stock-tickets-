@@ -1,2 +1,2 @@
-# crystal-stock-tickets-
-EFWEFWEF
+# Trade Central
+Trade Central bot and dashboard.

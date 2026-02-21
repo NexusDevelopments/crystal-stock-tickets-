@@ -96,7 +96,7 @@ function InviteBot() {
               Recommended Permissions
             </h2>
             <p style={{ opacity: 0.8, marginBottom: '1.5rem', lineHeight: '1.6' }}>
-              This invite link includes the recommended permissions for Crystal Stock Tickets workflows.
+              This invite link includes the recommended permissions for Trade Central workflows.
             </p>
             
             <div style={{

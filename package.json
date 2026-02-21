@@ -1,7 +1,7 @@
 {
-  "name": "crystal-stock-tickets",
+  "name": "trade-central",
   "version": "1.0.0",
-  "description": "Crystal Stock Tickets bot and dashboard",
+  "description": "Trade Central bot and dashboard",
   "main": "src/index.js",
   "type": "commonjs",
   "scripts": {

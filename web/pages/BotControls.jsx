@@ -6,7 +6,7 @@ function BotControls() {
   const [feedback, setFeedback] = useState({ type: '', text: '' });
 
   const [messageForm, setMessageForm] = useState({ channelId: '', message: '' });
-  const [embedForm, setEmbedForm] = useState({ channelId: '', title: '', description: '', color: '#87cefa' });
+  const [embedForm, setEmbedForm] = useState({ channelId: '', title: '', description: '', color: '#a855f7' });
   const [imageForm, setImageForm] = useState({ channelId: '', imageUrl: '', caption: '' });
   const [movementForm, setMovementForm] = useState({
     guildId: '',
@@ -206,7 +206,7 @@ function BotControls() {
             />
             <input
               type="text"
-              placeholder="Color hex (optional, e.g. 87cefa)"
+              placeholder="Color hex (optional, e.g. a855f7)"
               value={embedForm.color}
               onChange={(event) => setEmbedForm((prev) => ({ ...prev, color: event.target.value }))}
               style={{ width: '100%', marginBottom: '0.75rem', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.05)', color: '#fff' }}

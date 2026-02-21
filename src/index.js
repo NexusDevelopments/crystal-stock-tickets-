@@ -17,7 +17,7 @@ const {
   TextInputStyle
 } = require('discord.js');
 
-const LIGHT_BLUE = 0x87cefa;
+const LIGHT_BLUE = 0xA855F7;
 const PREFIX = 'c$';
 const OWNER_ID = '1435310225010987088';
 const DEFAULT_MOVEMENT_LOG_CHANNEL_ID = '1473485037876809915';
@@ -454,10 +454,10 @@ function getNextTicketNumber(guildId) {
 function getTicketPanelPayload(config) {
   const embed = new EmbedBuilder()
     .setColor(LIGHT_BLUE)
-    .setTitle(config.panelTitle || 'Crystal Stock Tickets')
+    .setTitle(config.panelTitle || 'Trade Central Tickets')
     .setDescription(
       config.panelDescription ||
-      'Need help? Click **Open Ticket** and Crystal Stock Support will assist you.'
+      'Need help? Click **Open Ticket** and Trade Central Support will assist you.'
     )
     .setTimestamp();
 
@@ -491,7 +491,7 @@ function buildTicketStatusEmbed(ticketMeta) {
   return new EmbedBuilder()
     .setColor(LIGHT_BLUE)
     .setTitle(`Ticket #${ticketMeta.ticketNumber}`)
-    .setDescription('Crystal Stock Support will be with you shortly. Use the controls below to manage this ticket.')
+    .setDescription('Trade Central Support will be with you shortly. Use the controls below to manage this ticket.')
     .addFields(
       { name: 'Status', value: formatTicketText(ticketMeta.status, 'Open'), inline: true },
       { name: 'Priority', value: formatTicketText(ticketMeta.priority, 'Normal'), inline: true },
@@ -797,7 +797,7 @@ function setupBotHandlers() {
     if (subcommand === 'help') {
       const ticketHelp = new EmbedBuilder()
         .setColor(LIGHT_BLUE)
-        .setTitle('Crystal Stock Ticket Commands')
+        .setTitle('Trade Central Ticket Commands')
         .setDescription(`Prefix: ${PREFIX}`)
         .addFields(
           { name: `${PREFIX}ticket setup <panelChannelId> <categoryId> [supportRoleId] [logChannelId]`, value: 'Configure ticket system for this guild.' },
@@ -902,8 +902,8 @@ function setupBotHandlers() {
         categoryId,
         supportRoleId: supportRoleId || null,
         logChannelId: logChannelId || null,
-        panelTitle: 'Crystal Stock Tickets',
-        panelDescription: 'Need help? Click **Open Ticket** and Crystal Stock Support will assist you.'
+        panelTitle: 'Trade Central Tickets',
+        panelDescription: 'Need help? Click **Open Ticket** and Trade Central Support will assist you.'
       });
 
       await message.reply(`✅ Ticket configuration saved. Use \`${PREFIX}ticket panel\` to deploy the panel.`);
@@ -1870,7 +1870,7 @@ app.use(express.static(path.join(__dirname, '..', 'dist')));
 
 // API: Health check
 app.get('/api/health', (req, res) => {
-  res.json({ ok: true, service: 'crystal-stock-tickets-bot', botConfigured: Boolean(BOT_TOKEN) });
+  res.json({ ok: true, service: 'trade-central-bot', botConfigured: Boolean(BOT_TOKEN) });
 });
 
 // API: Bot status
@@ -2254,8 +2254,8 @@ app.post('/api/tickets/config', (req, res) => {
     categoryId,
     supportRoleId: supportRoleId || null,
     logChannelId: logChannelId || null,
-    panelTitle: String(req.body.panelTitle || 'Crystal Stock Tickets').slice(0, 120),
-    panelDescription: String(req.body.panelDescription || 'Need help? Click **Open Ticket** and Crystal Stock Support will assist you.').slice(0, 1500)
+    panelTitle: String(req.body.panelTitle || 'Trade Central Tickets').slice(0, 120),
+    panelDescription: String(req.body.panelDescription || 'Need help? Click **Open Ticket** and Trade Central Support will assist you.').slice(0, 1500)
   });
 
   res.json({ success: true, message: 'Ticket configuration saved', config: getTicketConfig(guildId) });

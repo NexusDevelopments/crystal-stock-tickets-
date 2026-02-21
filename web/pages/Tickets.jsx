@@ -7,8 +7,8 @@ const DEFAULT_FORM = {
   categoryId: '',
   supportRoleId: '',
   logChannelId: '',
-  panelTitle: 'Support Tickets',
-  panelDescription: 'Need help? Click Open Ticket and our team will assist you.'
+  panelTitle: 'Trade Central Tickets',
+  panelDescription: 'Need help? Click Open Ticket and Trade Central Support will assist you.'
 };
 const TICKETS_LAST_GUILD_KEY = 'tickets:lastGuildId';
 const TICKETS_LAST_FORM_KEY = 'tickets:lastForm';
@@ -155,7 +155,7 @@ function Tickets() {
       <div className="container" style={{ padding: '40px 20px', maxWidth: '1100px' }}>
         <div style={{ textAlign: 'center', marginBottom: '1.5rem' }} className="fade-in">
           <h1 style={{ fontSize: '2.3rem', marginBottom: '0.6rem', fontWeight: '800' }}>
-            Advanced Ticket System
+            Trade Central Ticket System
           </h1>
           <p style={{ opacity: 0.7 }}>
             Configure secure trade tickets from the site and manage with `c$` commands.
