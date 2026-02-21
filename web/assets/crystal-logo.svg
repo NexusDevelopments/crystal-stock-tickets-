@@ -1,0 +1,11 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="crystalFill" x1="32" y1="20" x2="224" y2="236" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#BDE8FF"/>
+      <stop offset="0.45" stop-color="#5CB8FF"/>
+      <stop offset="1" stop-color="#1D6BFF"/>
+    </linearGradient>
+  </defs>
+  <path d="M74 32H182L228 98L128 224L28 98L74 32Z" fill="url(#crystalFill)"/>
+  <path d="M74 32L128 224M182 32L128 224M28 98H228M102 98L128 32L154 98" stroke="white" stroke-opacity="0.75" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
