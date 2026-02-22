@@ -11,6 +11,7 @@ const {
   Client,
   EmbedBuilder,
   GatewayIntentBits,
+  MessageFlags,
   ModalBuilder,
   PermissionFlagsBits,
   TextInputBuilder,
@@ -731,7 +732,7 @@ async function closeTicketChannel(channel, closedByTag, closeReason) {
 function setupBotHandlers() {
   client.removeAllListeners();
 
-  client.once('ready', () => {
+  client.once('clientReady', () => {
     botStartTime = Date.now();
     console.log(`Bot online as ${client.user.tag}`);
 
@@ -1101,19 +1102,19 @@ client.on('interactionCreate', async (interaction) => {
     if (interaction.isButton() && interaction.customId === 'ticket_claim') {
       const ticketMeta = recoverTicketMeta(interaction.channel);
       if (!ticketMeta) {
-        await interaction.reply({ content: 'This is not an active ticket channel.', ephemeral: true });
+        await interaction.reply({ content: 'This is not an active ticket channel.', flags: MessageFlags.Ephemeral });
         return;
       }
 
       const canManage = isSupportStaff(interaction.member, interaction.guildId, interaction.user.id);
 
       if (!canManage) {
-        await interaction.reply({ content: 'Only Support can claim this ticket.', ephemeral: true });
+        await interaction.reply({ content: 'Only Support can claim this ticket.', flags: MessageFlags.Ephemeral });
         return;
       }
 
       if (ticketMeta.claimedBy && ticketMeta.claimedBy !== interaction.user.id) {
-        await interaction.reply({ content: `This ticket is already claimed by <@${ticketMeta.claimedBy}>.`, ephemeral: true });
+        await interaction.reply({ content: `This ticket is already claimed by <@${ticketMeta.claimedBy}>.`, flags: MessageFlags.Ephemeral });
         return;
       }
 
@@ -1122,7 +1123,7 @@ client.on('interactionCreate', async (interaction) => {
       ticketMeta.status = 'Claimed';
       saveTicketsState();
 
-      await interaction.reply({ content: `✅ Ticket claimed by <@${interaction.user.id}>.`, ephemeral: true });
+      await interaction.reply({ content: `✅ Ticket claimed by <@${interaction.user.id}>.`, flags: MessageFlags.Ephemeral });
       await postTicketStatusMessage(interaction.channel, ticketMeta);
       return;
     }
@@ -1132,7 +1133,7 @@ client.on('interactionCreate', async (interaction) => {
       if (!config) {
         await interaction.reply({
           content: 'Ticket system is not configured yet.',
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
         return;
       }
@@ -1167,7 +1168,7 @@ client.on('interactionCreate', async (interaction) => {
     if (interaction.isModalSubmit() && interaction.customId === 'ticket_open_modal') {
       const config = getTicketConfig(interaction.guildId);
       if (!config) {
-        await interaction.reply({ content: 'Ticket system is not configured yet.', ephemeral: true });
+        await interaction.reply({ content: 'Ticket system is not configured yet.', flags: MessageFlags.Ephemeral });
         return;
       }
 
@@ -1175,7 +1176,7 @@ client.on('interactionCreate', async (interaction) => {
       const tradeDetails = interaction.fields.getTextInputValue('ticket_trade_details');
 
       if (!String(tradeTargetRaw || '').trim() || !String(tradeDetails || '').trim()) {
-        await interaction.reply({ content: 'Both trade target and trade details are required.', ephemeral: true });
+        await interaction.reply({ content: 'Both trade target and trade details are required.', flags: MessageFlags.Ephemeral });
         return;
       }
 
@@ -1213,7 +1214,7 @@ client.on('interactionCreate', async (interaction) => {
 
       await interaction.reply({
         content: `✅ Your ticket is ready: ${channel}`,
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
       return;
     }
@@ -1221,7 +1222,7 @@ client.on('interactionCreate', async (interaction) => {
     if (interaction.isButton() && interaction.customId.startsWith('ticket_confirm_target:')) {
       const ticketMeta = recoverTicketMeta(interaction.channel);
       if (!ticketMeta) {
-        await interaction.reply({ content: 'This is not an active ticket channel.', ephemeral: true });
+        await interaction.reply({ content: 'This is not an active ticket channel.', flags: MessageFlags.Ephemeral });
         return;
       }
 
@@ -1231,7 +1232,7 @@ client.on('interactionCreate', async (interaction) => {
         isSupportStaff(interaction.member, interaction.guildId, interaction.user.id);
 
       if (!isAllowedConfirmer) {
-        await interaction.reply({ content: 'Only the ticket opener or Support can confirm this user.', ephemeral: true });
+        await interaction.reply({ content: 'Only the ticket opener or Support can confirm this user.', flags: MessageFlags.Ephemeral });
         return;
       }
 
@@ -1248,7 +1249,7 @@ client.on('interactionCreate', async (interaction) => {
       ticketMeta.status = 'User Confirmed';
       saveTicketsState();
 
-      await interaction.reply({ content: `✅ Added <@${targetUserId}> to the ticket.`, ephemeral: true });
+      await interaction.reply({ content: `✅ Added <@${targetUserId}> to the ticket.`, flags: MessageFlags.Ephemeral });
       await postTicketStatusMessage(interaction.channel, ticketMeta);
       return;
     }
@@ -1256,18 +1257,18 @@ client.on('interactionCreate', async (interaction) => {
     if (interaction.isButton() && interaction.customId === 'ticket_done') {
       const ticketMeta = recoverTicketMeta(interaction.channel);
       if (!ticketMeta) {
-        await interaction.reply({ content: 'This is not an active ticket channel.', ephemeral: true });
+        await interaction.reply({ content: 'This is not an active ticket channel.', flags: MessageFlags.Ephemeral });
         return;
       }
 
       if (!isSupportStaff(interaction.member, interaction.guildId, interaction.user.id)) {
-        await interaction.reply({ content: 'Only Support can mark this trade as done.', ephemeral: true });
+        await interaction.reply({ content: 'Only Support can mark this trade as done.', flags: MessageFlags.Ephemeral });
         return;
       }
 
       ticketMeta.status = 'Done';
       saveTicketsState();
-      await interaction.reply({ content: '✅ Trade status set to Done.', ephemeral: true });
+      await interaction.reply({ content: '✅ Trade status set to Done.', flags: MessageFlags.Ephemeral });
       await postTicketStatusMessage(interaction.channel, ticketMeta);
       return;
     }
@@ -1277,7 +1278,7 @@ client.on('interactionCreate', async (interaction) => {
       if (!ticketMeta) {
         await interaction.reply({
           content: 'This is not an active ticket channel.',
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
         return;
       }
@@ -1287,7 +1288,7 @@ client.on('interactionCreate', async (interaction) => {
       if (!canClose) {
         await interaction.reply({
           content: 'Only Support can close this ticket.',
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
         return;
       }
@@ -1311,19 +1312,19 @@ client.on('interactionCreate', async (interaction) => {
     if (interaction.isModalSubmit() && interaction.customId === 'ticket_close_reason_modal') {
       const ticketMeta = recoverTicketMeta(interaction.channel);
       if (!ticketMeta) {
-        await interaction.reply({ content: 'This is not an active ticket channel.', ephemeral: true });
+        await interaction.reply({ content: 'This is not an active ticket channel.', flags: MessageFlags.Ephemeral });
         return;
       }
 
       const canClose = isSupportStaff(interaction.member, interaction.guildId, interaction.user.id);
 
       if (!canClose) {
-        await interaction.reply({ content: 'Only Support can close this ticket.', ephemeral: true });
+        await interaction.reply({ content: 'Only Support can close this ticket.', flags: MessageFlags.Ephemeral });
         return;
       }
 
       const closeReason = interaction.fields.getTextInputValue('ticket_close_reason');
-      await interaction.reply({ content: 'Closing ticket...', ephemeral: true });
+      await interaction.reply({ content: 'Closing ticket...', flags: MessageFlags.Ephemeral });
       await closeTicketChannel(interaction.channel, interaction.user.tag, closeReason || null);
       return;
     }
@@ -1373,7 +1374,7 @@ client.on('interactionCreate', async (interaction) => {
       if (!ids.length) {
         await interaction.reply({
           content: 'No valid user IDs were found. Try again.',
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
         return;
       }
@@ -1385,11 +1386,11 @@ client.on('interactionCreate', async (interaction) => {
         type: 'demo'
       });
 
-      await interaction.reply({ content: 'Ids have been submitted!', ephemeral: true });
+      await interaction.reply({ content: 'Ids have been submitted!', flags: MessageFlags.Ephemeral });
 
       const progressMessage = await interaction.followUp({
         embeds: [buildFormatProgressEmbed(0, ids.length)],
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
         fetchReply: true
       });
 
@@ -1426,7 +1427,7 @@ client.on('interactionCreate', async (interaction) => {
       if (!ids.length) {
         await interaction.reply({
           content: 'No valid user IDs were found. Try again.',
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
         return;
       }
@@ -1438,11 +1439,11 @@ client.on('interactionCreate', async (interaction) => {
         type: 'promo'
       });
 
-      await interaction.reply({ content: 'Ids have been submitted!', ephemeral: true });
+      await interaction.reply({ content: 'Ids have been submitted!', flags: MessageFlags.Ephemeral });
 
       const progressMessage = await interaction.followUp({
         embeds: [buildFormatProgressEmbed(0, ids.length)],
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
         fetchReply: true
       });
 
@@ -1478,7 +1479,7 @@ client.on('interactionCreate', async (interaction) => {
       if (!session) {
         await interaction.reply({
           content: `No IDs saved for you yet. Run ${PREFIX}demo first.`,
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
         return;
       }
@@ -1486,7 +1487,7 @@ client.on('interactionCreate', async (interaction) => {
       if (session.guildId !== interaction.guildId) {
         await interaction.reply({
           content: 'Saved IDs belong to a different server session.',
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
         return;
       }
@@ -1495,7 +1496,7 @@ client.on('interactionCreate', async (interaction) => {
         sessions.delete(interaction.user.id);
         await interaction.reply({
           content: `Your saved ids expired. Run ${PREFIX}demo again for a new wave.`,
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
         return;
       }
@@ -1507,7 +1508,7 @@ client.on('interactionCreate', async (interaction) => {
 
       await interaction.reply({
         embeds: [buildDemoteProgressEmbed(0, total)],
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
 
       for (let index = 0; index < total; index += 1) {
@@ -1603,7 +1604,7 @@ client.on('interactionCreate', async (interaction) => {
       if (!session) {
         await interaction.reply({
           content: `No IDs saved for you yet. Run ${PREFIX}promo first.`,
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
         return;
       }
@@ -1611,7 +1612,7 @@ client.on('interactionCreate', async (interaction) => {
       if (session.guildId !== interaction.guildId) {
         await interaction.reply({
           content: 'Saved IDs belong to a different server session.',
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
         return;
       }
@@ -1620,7 +1621,7 @@ client.on('interactionCreate', async (interaction) => {
         sessions.delete(interaction.user.id);
         await interaction.reply({
           content: `Your saved ids expired. Run ${PREFIX}promo again for a new wave.`,
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
         return;
       }
@@ -1632,7 +1633,7 @@ client.on('interactionCreate', async (interaction) => {
 
       await interaction.reply({
         embeds: [buildPromoteProgressEmbed(0, total)],
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
 
       for (let index = 0; index < total; index += 1) {
@@ -1726,7 +1727,7 @@ client.on('interactionCreate', async (interaction) => {
     if (interaction.isRepliable() && !interaction.replied && !interaction.deferred) {
       await interaction.reply({
         content: 'Something broke while running that flow.',
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
       return;
     }
@@ -1734,7 +1735,7 @@ client.on('interactionCreate', async (interaction) => {
     if (interaction.isRepliable()) {
       await interaction.followUp({
         content: 'Something broke while running that flow.',
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       }).catch(() => null);
     }
   }
