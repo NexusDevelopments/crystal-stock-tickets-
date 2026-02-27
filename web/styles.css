@@ -623,3 +623,46 @@ body {
 .activity-log-content::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.25);
 }
+
+/* Update Popup */
+.update-popup {
+  position: fixed;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  min-width: 320px;
+  max-width: 520px;
+  background: rgba(12, 12, 12, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 12px;
+  padding: 14px 16px 10px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.update-popup-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: 6px;
+}
+
+.update-popup-notes {
+  font-size: 0.82rem;
+  opacity: 0.85;
+  display: grid;
+  gap: 2px;
+}
+
+.update-progress {
+  margin-top: 10px;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.2));
+  animation: updateCountdown 5s linear forwards;
+}
+
+@keyframes updateCountdown {
+  from { width: 100%; }
+  to { width: 0%; }
+}

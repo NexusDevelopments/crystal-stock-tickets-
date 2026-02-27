@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import logo from '../assets/crystal-logo.svg';
 
 function ActivityLogSidebar() {
   const [logs, setLogs] = useState([]);
@@ -26,12 +25,14 @@ function ActivityLogSidebar() {
 
   const getActionLabel = (action) => {
     const labels = {
-      preset_sent: '📤 Preset Sent',
-      preset_saved: '💾 Preset Saved',
-      preset_deleted: '🗑️ Preset Deleted',
-      saved_preset_sent: '📤 Saved Preset Sent',
-      emojis_downloaded: '⬇️ Emojis Downloaded',
-      emojis_uploaded: '⬆️ Emojis Uploaded'
+      preset_sent: 'Preset Sent',
+      preset_saved: 'Preset Saved',
+      preset_deleted: 'Preset Deleted',
+      saved_preset_sent: 'Saved Preset Sent',
+      emojis_downloaded: 'Emojis Downloaded',
+      emojis_uploaded: 'Emojis Uploaded',
+      site_updated: 'Site Updated',
+      code_push: 'Code Push'
     };
     return labels[action] || action;
   };
@@ -52,17 +53,8 @@ function ActivityLogSidebar() {
   return (
     <div className="activity-log-sidebar">
       <div className="activity-log-header">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <img
-            src={logo}
-            alt="TradeUp"
-            style={{ width: '26px', height: '26px', borderRadius: '6px' }}
-          />
-          <div>
-            <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>Activity Log</div>
-            <div style={{ opacity: 0.6, fontSize: '0.75rem' }}>Recent actions</div>
-          </div>
-        </div>
+        <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>Activity Log</div>
+        <div style={{ opacity: 0.6, fontSize: '0.75rem' }}>Recent actions</div>
       </div>
       
       <div className="activity-log-content">
@@ -73,16 +65,14 @@ function ActivityLogSidebar() {
         ) : (
           logs.map((log) => (
             <div key={log.id} className="activity-log-item">
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '4px' }}>
-                <img
-                  src={logo}
-                  alt="TradeUp"
-                  style={{ width: '18px', height: '18px', borderRadius: '4px', opacity: 0.9 }}
-                />
-                <div style={{ fontSize: '0.75rem', fontWeight: 500 }}>
-                  {getActionLabel(log.action)}
-                </div>
+              <div style={{ fontSize: '0.75rem', fontWeight: 500, marginBottom: '4px' }}>
+                {getActionLabel(log.action)}
               </div>
+              {log.message ? (
+                <div style={{ fontSize: '0.7rem', opacity: 0.7, marginBottom: '2px' }}>
+                  {log.message}
+                </div>
+              ) : null}
               {log.presetName ? (
                 <div style={{ fontSize: '0.7rem', opacity: 0.7, marginBottom: '2px' }}>
                   {log.presetName}

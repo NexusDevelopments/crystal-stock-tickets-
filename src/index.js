@@ -32,6 +32,7 @@ const ALLOWED_ROLE_IDS = (process.env.ALLOWED_ROLE_IDS || '')
 const SESSION_TTL_MS = 10 * 60 * 1000;
 const TICKETS_STATE_PATH = path.join(__dirname, '..', 'data', 'tickets-state.json');
 const EMBED_PRESETS_PATH = path.join(__dirname, '..', 'data', 'embed-presets.json');
+const ACTIVITY_LOGS_PATH = path.join(__dirname, '..', 'data', 'activity-logs.json');
 const ALL_PERMISSION_NAMES = Object.entries(PermissionFlagsBits)
   .filter(([, value]) => typeof value === 'bigint')
   .map(([name]) => name)
@@ -150,6 +151,29 @@ function loadEmbedPresetsState() {
   }
 }
 
+function loadActivityLogsState() {
+  if (!fs.existsSync(ACTIVITY_LOGS_PATH)) return;
+
+  try {
+    const raw = fs.readFileSync(ACTIVITY_LOGS_PATH, 'utf8');
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      activityLogs = parsed;
+    }
+  } catch (error) {
+    console.error('Failed to load activity logs:', error);
+  }
+}
+
+function saveActivityLogsState() {
+  try {
+    fs.mkdirSync(path.dirname(ACTIVITY_LOGS_PATH), { recursive: true });
+    fs.writeFileSync(ACTIVITY_LOGS_PATH, JSON.stringify(activityLogs, null, 2), 'utf8');
+  } catch (error) {
+    console.error('Failed to save activity logs:', error);
+  }
+}
+
 function logActivity(action, details = {}) {
   const log = {
     id: Date.now() + Math.random().toString(36).substr(2, 9),
@@ -161,6 +185,7 @@ function logActivity(action, details = {}) {
   if (activityLogs.length > 100) {
     activityLogs = activityLogs.slice(0, 100);
   }
+  saveActivityLogsState();
   return log;
 }
 
@@ -175,6 +200,7 @@ function saveEmbedPresetsState() {
 
 loadTicketsState();
 loadEmbedPresetsState();
+loadActivityLogsState();
 
 function createClient() {
   return new Client({
@@ -2714,6 +2740,25 @@ app.get('/api/activity-logs', (req, res) => {
     success: true,
     logs: activityLogs.slice(0, limit)
   });
+});
+
+app.post('/api/activity-logs/append', (req, res) => {
+  const { action, details } = req.body || {};
+  if (!action) {
+    return res.status(400).json({ success: false, message: 'action is required' });
+  }
+
+  if (details && details.updateId) {
+    const existing = activityLogs.find(
+      (log) => log.action === action && log.updateId === details.updateId
+    );
+    if (existing) {
+      return res.json({ success: true, log: existing });
+    }
+  }
+
+  const log = logActivity(action, details || {});
+  res.json({ success: true, log });
 });
 
 // API: Emoji management

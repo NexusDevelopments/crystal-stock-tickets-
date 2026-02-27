@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { BrowserRouter as Router, NavLink, Routes, Route } from 'react-router-dom';
 import BotStatus from './pages/BotStatus';
 import InviteBot from './pages/InviteBot';
@@ -11,9 +12,48 @@ import Emojis from './pages/Emojis';
 import ActivityLogSidebar from './components/ActivityLogSidebar';
 
 function App() {
+  const UPDATE_ID = '2026-02-26-01';
+  const UPDATE_MESSAGE = 'Site updated';
+  const UPDATE_NOTES = [
+    'Fixed emoji download error handling.',
+    'Added activity log persistence.',
+    'UI alerts now show branding.'
+  ];
+
+  const [showUpdate, setShowUpdate] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowUpdate(false), 5000);
+
+    fetch('/api/activity-logs/append', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'code_push',
+        details: {
+          updateId: UPDATE_ID,
+          message: `Site updated: ${UPDATE_NOTES.join(' ')}`
+        }
+      })
+    }).catch(() => null);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <Router>
       <div className="app-shell">
+        {showUpdate ? (
+          <div className="update-popup">
+            <div className="update-popup-title">{UPDATE_MESSAGE}</div>
+            <div className="update-popup-notes">
+              {UPDATE_NOTES.map((note) => (
+                <div key={note}>{note}</div>
+              ))}
+            </div>
+            <div className="update-progress" />
+          </div>
+        ) : null}
         <aside className="global-side-panel">
           <div className="side-brand">
             <div className="side-brand-text">TradeUp Owner Panel</div>
