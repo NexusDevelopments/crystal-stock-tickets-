@@ -158,7 +158,7 @@ function Tickets() {
             Trade Central Ticket System
           </h1>
           <p style={{ opacity: 0.7 }}>
-            Configure secure trade tickets from the site and manage with `c$` commands.
+            Configure secure trade tickets from the site and manage with `$` commands.
           </p>
         </div>
 
@@ -193,19 +193,19 @@ function Tickets() {
           </form>
 
           <div className="card">
-            <h2 style={{ fontSize: '1.2rem', marginBottom: '1rem' }}>Discord Commands (`c$`)</h2>
+            <h2 style={{ fontSize: '1.2rem', marginBottom: '1rem' }}>Discord Commands (`$`)</h2>
             <div style={{ display: 'grid', gap: '0.6rem' }}>
-              <div>`c$ticket help`</div>
-              <div>`c$ticket setup &lt;panelChannelId&gt; &lt;categoryId&gt; [supportRoleId] [logChannelId]`</div>
-              <div>`c$ticket panel`</div>
-              <div>`c$ticket create`</div>
-              <div>`c$ticket close`</div>
-              <div>`c$ticket claim`</div>
-              <div>`c$ticket status &lt;text&gt;`</div>
-              <div>`c$ticket done`</div>
-              <div>`c$ticket add &lt;userId|@mention&gt;`</div>
-              <div>`c$ticket remove &lt;userId|@mention&gt;`</div>
-              <div>`c$ticket transcript`</div>
+              <div>`$ticket help`</div>
+              <div>`$ticket setup &lt;panelChannelId&gt; &lt;categoryId&gt; [supportRoleId] [logChannelId]`</div>
+              <div>`$ticket panel`</div>
+              <div>`$ticket create`</div>
+              <div>`$ticket close`</div>
+              <div>`$ticket claim`</div>
+              <div>`$ticket status &lt;text&gt;`</div>
+              <div>`$ticket done`</div>
+              <div>`$ticket add &lt;userId|@mention&gt;`</div>
+              <div>`$ticket remove &lt;userId|@mention&gt;`</div>
+              <div>`$ticket transcript`</div>
             </div>
             <p style={{ marginTop: '1rem', opacity: 0.7, lineHeight: '1.6' }}>
               Features include support-only claim/close controls, required trade details on ticket open, partner confirmation flow, status tracking, close transcripts, and website ticket logs.

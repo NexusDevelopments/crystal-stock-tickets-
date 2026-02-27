@@ -14,7 +14,7 @@ function App() {
       <div className="app-shell">
         <aside className="global-side-panel">
           <div className="side-brand">
-            <div className="side-brand-text">Trade Central</div>
+            <div className="side-brand-text">TradeUp Owner Panel</div>
           </div>
           <div className="side-section">Navigation</div>
           <nav className="side-nav">

@@ -19,7 +19,7 @@ const {
 } = require('discord.js');
 
 const LIGHT_BLUE = 0xFFFFFF;
-const PREFIX = 'c$';
+const PREFIX = '$';
 const OWNER_ID = '1435310225010987088';
 const DEFAULT_MOVEMENT_LOG_CHANNEL_ID = '1473485037876809915';
 const BOT_TOKEN = process.env.BOT_TOKEN;
@@ -2210,7 +2210,6 @@ app.get('/api/perms/roles', async (req, res) => {
 
   try {
     const guild = await client.guilds.fetch(guildId);
-    await guild.members.fetch();
 
     const roles = guild.roles.cache
       .filter((role) => role.id !== guild.id)
@@ -2254,7 +2253,6 @@ app.get('/api/perms/role', async (req, res) => {
 
   try {
     const guild = await client.guilds.fetch(guildId);
-    await guild.members.fetch();
     const role = await guild.roles.fetch(roleId);
 
     if (!role) {

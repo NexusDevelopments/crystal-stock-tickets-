@@ -194,15 +194,6 @@ function EmbedPresets() {
           </div>
         ) : null}
 
-        <div className="card">
-          <h2 style={{ fontSize: '1.1rem', marginBottom: '0.6rem' }}>Preset Preview (Structure)</h2>
-          <ul style={{ marginLeft: '18px', opacity: 0.82, lineHeight: '1.6' }}>
-            <li>What is TradUp?</li>
-            <li>How Safe Is TradUp MM?</li>
-            <li>How to Reduce Risk</li>
-            <li>What This Server Is About (MiddleMan for Roblox games)</li>
-          </ul>
-        </div>
       </div>
     </>
   );

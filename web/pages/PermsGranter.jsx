@@ -13,10 +13,15 @@ function PermsGranter() {
   const [loadingRoles, setLoadingRoles] = useState(false);
   const [loadingRole, setLoadingRole] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  const [guildMenuOpen, setGuildMenuOpen] = useState(false);
 
   const dangerousRoles = useMemo(
     () => roles.filter((role) => role.hasDangerousPermissions),
     [roles]
+  );
+  const selectedGuild = useMemo(
+    () => guilds.find((guild) => guild.id === guildId) || null,
+    [guilds, guildId]
   );
 
   const showMessage = (type, text) => {
@@ -220,25 +225,73 @@ function PermsGranter() {
 
         <div className="card" style={{ marginBottom: '1rem' }}>
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
-            <select
-              value={guildId}
-              onChange={(event) => setGuildId(event.target.value)}
-              style={{
-                minWidth: '320px',
-                padding: '10px',
-                borderRadius: '8px',
-                border: '1px solid rgba(255,255,255,0.2)',
-                background: 'rgba(255,255,255,0.05)',
-                color: '#fff'
-              }}
-              disabled={loadingGuilds}
-            >
-              {guilds.map((guild) => (
-                <option key={guild.id} value={guild.id} style={{ background: '#111', color: '#fff' }}>
-                  {guild.name} ({guild.memberCount})
-                </option>
-              ))}
-            </select>
+            <div style={{ position: 'relative', minWidth: '320px' }}>
+              <button
+                type="button"
+                className="btn"
+                disabled={loadingGuilds}
+                onClick={() => setGuildMenuOpen((prev) => !prev)}
+                style={{
+                  width: '100%',
+                  borderWidth: '1px',
+                  background: 'rgba(255,255,255,0.06)',
+                  color: '#fff',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '10px 12px'
+                }}
+              >
+                <span>
+                  {selectedGuild ? `${selectedGuild.name} (${selectedGuild.memberCount})` : 'Select Guild'}
+                </span>
+                <span style={{ opacity: 0.75 }}>{guildMenuOpen ? '▲' : '▼'}</span>
+              </button>
+
+              {guildMenuOpen ? (
+                <div
+                  className="card"
+                  style={{
+                    position: 'absolute',
+                    top: 'calc(100% + 6px)',
+                    left: 0,
+                    right: 0,
+                    zIndex: 30,
+                    padding: '8px',
+                    maxHeight: '260px',
+                    overflowY: 'auto'
+                  }}
+                >
+                  <div style={{ display: 'grid', gap: '6px' }}>
+                    {guilds.map((guild) => (
+                      <button
+                        key={guild.id}
+                        type="button"
+                        onClick={() => {
+                          setGuildId(guild.id);
+                          setGuildMenuOpen(false);
+                        }}
+                        style={{
+                          textAlign: 'left',
+                          border: guild.id === guildId
+                            ? '1px solid rgba(255,255,255,0.55)'
+                            : '1px solid rgba(255,255,255,0.15)',
+                          borderRadius: '8px',
+                          background: guild.id === guildId
+                            ? 'rgba(255,255,255,0.14)'
+                            : 'rgba(255,255,255,0.04)',
+                          color: '#fff',
+                          padding: '8px 10px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {guild.name} ({guild.memberCount})
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
             <button className="btn" type="button" onClick={loadGuilds}>
               Refresh Guilds
             </button>
@@ -322,29 +375,31 @@ function PermsGranter() {
                     const dangerous = roleDetail.dangerousPermissions.includes(permissionName);
 
                     return (
-                      <label
+                      <button
                         key={permissionName}
+                        type="button"
+                        onClick={() => togglePermission(permissionName)}
+                        disabled={!roleDetail.editable || roleDetail.managed}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '8px',
-                          border: '1px solid rgba(255,255,255,0.15)',
+                          justifyContent: 'space-between',
+                          gap: '10px',
+                          border: checked ? '1px solid rgba(255,255,255,0.55)' : '1px solid rgba(255,255,255,0.15)',
                           borderRadius: '8px',
                           padding: '8px 10px',
-                          background: checked ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.03)'
+                          background: checked ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.03)',
+                          color: '#fff',
+                          cursor: !roleDetail.editable || roleDetail.managed ? 'not-allowed' : 'pointer',
+                          opacity: !roleDetail.editable || roleDetail.managed ? 0.55 : 1
                         }}
                       >
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={() => togglePermission(permissionName)}
-                          disabled={!roleDetail.editable || roleDetail.managed}
-                        />
                         <span style={{ fontSize: '0.86rem' }}>
                           {permissionName}
                           {dangerous ? ' ⚠' : ''}
                         </span>
-                      </label>
+                        <span style={{ fontSize: '0.78rem', opacity: 0.9 }}>{checked ? 'ON' : 'OFF'}</span>
+                      </button>
                     );
                   })}
                 </div>
