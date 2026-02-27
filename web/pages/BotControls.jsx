@@ -6,7 +6,7 @@ function BotControls() {
   const [feedback, setFeedback] = useState({ type: '', text: '' });
 
   const [messageForm, setMessageForm] = useState({ channelId: '', message: '' });
-  const [embedForm, setEmbedForm] = useState({ channelId: '', title: '', description: '', color: '#a855f7' });
+  const [embedForm, setEmbedForm] = useState({ channelId: '', title: '', description: '', color: '#ffffff' });
   const [imageForm, setImageForm] = useState({ channelId: '', imageUrl: '', caption: '' });
   const [movementForm, setMovementForm] = useState({
     guildId: '',

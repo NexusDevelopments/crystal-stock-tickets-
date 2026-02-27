@@ -18,7 +18,7 @@ const {
   TextInputStyle
 } = require('discord.js');
 
-const LIGHT_BLUE = 0xA855F7;
+const LIGHT_BLUE = 0xFFFFFF;
 const PREFIX = 'c$';
 const OWNER_ID = '1435310225010987088';
 const DEFAULT_MOVEMENT_LOG_CHANNEL_ID = '1473485037876809915';
@@ -31,6 +31,26 @@ const ALLOWED_ROLE_IDS = (process.env.ALLOWED_ROLE_IDS || '')
   .filter(Boolean);
 const SESSION_TTL_MS = 10 * 60 * 1000;
 const TICKETS_STATE_PATH = path.join(__dirname, '..', 'data', 'tickets-state.json');
+const EMBED_PRESETS_PATH = path.join(__dirname, '..', 'data', 'embed-presets.json');
+const ALL_PERMISSION_NAMES = Object.entries(PermissionFlagsBits)
+  .filter(([, value]) => typeof value === 'bigint')
+  .map(([name]) => name)
+  .sort((left, right) => left.localeCompare(right));
+const DANGEROUS_PERMISSION_NAMES = new Set([
+  'Administrator',
+  'ManageGuild',
+  'ManageRoles',
+  'ManageChannels',
+  'ManageWebhooks',
+  'ManageMessages',
+  'ManageNicknames',
+  'BanMembers',
+  'KickMembers',
+  'ModerateMembers',
+  'MentionEveryone',
+  'ViewAuditLog'
+]);
+const TRADUP_EMBED_COLOR = 0xF4C542;
 
 const sessions = new Map();
 let botStartTime = null;
@@ -45,6 +65,32 @@ let ticketsState = {
   logs: {},
   transcripts: {}
 };
+let embedPresetsState = {
+  tradupMiddleman: null
+};
+
+function getDefaultTradUpMiddlemanPreset() {
+  return {
+    title: 'TradUp Middleman Guide',
+    introText: 'Trusted middleman workflow for Roblox game trades. Use this guide before every deal to stay safe.',
+    whatIsText: 'TradUp is a Roblox middleman community that helps buyers and sellers complete trades with reduced scam risk by using verified middlemen and clear proof steps.',
+    safetyText: 'Safety depends on following process: confirm the middleman role, verify ticket logs, and never trade through DMs without an approved ticket.',
+    riskBullets: [
+      'Open a proper ticket',
+      'Verify middleman role + ID',
+      'Confirm trade terms in chat',
+      'Keep screenshots/proof',
+      'Never rush high-value trades'
+    ],
+    serverAboutText: 'TradUp focuses on secure **MiddleMan services for Roblox games** and smoother trading between trusted members.',
+    footerText: 'TradUp • Secure Roblox MiddleMan Trading',
+    colorHex: '#f4c542',
+    websiteLabel: 'Official Website',
+    websiteUrl: process.env.TRADUP_WEBSITE_URL || 'https://discord.com',
+    guidelinesLabel: 'Guidelines',
+    guidelinesUrl: process.env.TRADUP_RULES_URL || 'https://discord.com'
+  };
+}
 
 function loadTicketsState() {
   if (!fs.existsSync(TICKETS_STATE_PATH)) return;
@@ -73,7 +119,40 @@ function saveTicketsState() {
   }
 }
 
+function loadEmbedPresetsState() {
+  embedPresetsState = {
+    tradupMiddleman: getDefaultTradUpMiddlemanPreset()
+  };
+
+  if (!fs.existsSync(EMBED_PRESETS_PATH)) return;
+
+  try {
+    const raw = fs.readFileSync(EMBED_PRESETS_PATH, 'utf8');
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return;
+
+    if (parsed.tradupMiddleman && typeof parsed.tradupMiddleman === 'object') {
+      embedPresetsState.tradupMiddleman = {
+        ...embedPresetsState.tradupMiddleman,
+        ...parsed.tradupMiddleman
+      };
+    }
+  } catch (error) {
+    console.error('Failed to load embed presets:', error);
+  }
+}
+
+function saveEmbedPresetsState() {
+  try {
+    fs.mkdirSync(path.dirname(EMBED_PRESETS_PATH), { recursive: true });
+    fs.writeFileSync(EMBED_PRESETS_PATH, JSON.stringify(embedPresetsState, null, 2), 'utf8');
+  } catch (error) {
+    console.error('Failed to save embed presets:', error);
+  }
+}
+
 loadTicketsState();
+loadEmbedPresetsState();
 
 function createClient() {
   return new Client({
@@ -242,6 +321,119 @@ function parseDiscordId(input) {
   if (!input) return null;
   const match = String(input).match(/\d{17,20}/);
   return match ? match[0] : null;
+}
+
+function normalizePermissionNames(input) {
+  const source = Array.isArray(input) ? input : [];
+  const valid = source
+    .map((permissionName) => String(permissionName || '').trim())
+    .filter((permissionName) => ALL_PERMISSION_NAMES.includes(permissionName));
+
+  return [...new Set(valid)].sort((left, right) => left.localeCompare(right));
+}
+
+function normalizeText(value, fallback, maxLength) {
+  const resolved = String(value ?? fallback ?? '').trim();
+  if (!resolved) return String(fallback || '').slice(0, maxLength);
+  return resolved.slice(0, maxLength);
+}
+
+function normalizeUrl(value, fallback) {
+  const candidate = String(value ?? '').trim() || String(fallback || '').trim();
+  if (!candidate) return String(fallback || '').trim();
+  try {
+    const url = new URL(candidate);
+    if (url.protocol === 'http:' || url.protocol === 'https:') {
+      return url.toString();
+    }
+  } catch {
+    return String(fallback || '').trim();
+  }
+  return String(fallback || '').trim();
+}
+
+function normalizeBulletLines(value, fallback) {
+  const sourceLines = Array.isArray(value)
+    ? value
+    : String(value || '')
+      .split(/\r?\n/)
+      .map((line) => line.replace(/^[-•\s]+/, '').trim())
+      .filter(Boolean);
+
+  const valid = sourceLines
+    .map((line) => String(line || '').trim())
+    .filter(Boolean)
+    .slice(0, 12)
+    .map((line) => line.slice(0, 240));
+
+  if (valid.length) return valid;
+  return [...fallback];
+}
+
+function normalizeTradUpMiddlemanPreset(input) {
+  const defaults = getDefaultTradUpMiddlemanPreset();
+  const source = input && typeof input === 'object' ? input : {};
+
+  return {
+    title: normalizeText(source.title, defaults.title, 256),
+    introText: normalizeText(source.introText, defaults.introText, 4096),
+    whatIsText: normalizeText(source.whatIsText, defaults.whatIsText, 1024),
+    safetyText: normalizeText(source.safetyText, defaults.safetyText, 1024),
+    riskBullets: normalizeBulletLines(source.riskBullets, defaults.riskBullets),
+    serverAboutText: normalizeText(source.serverAboutText, defaults.serverAboutText, 1024),
+    footerText: normalizeText(source.footerText, defaults.footerText, 2048),
+    colorHex: (() => {
+      const raw = String(source.colorHex || defaults.colorHex || '').trim();
+      return /^#[0-9a-fA-F]{6}$/.test(raw) ? raw : defaults.colorHex;
+    })(),
+    websiteLabel: normalizeText(source.websiteLabel, defaults.websiteLabel, 80),
+    websiteUrl: normalizeUrl(source.websiteUrl, defaults.websiteUrl),
+    guidelinesLabel: normalizeText(source.guidelinesLabel, defaults.guidelinesLabel, 80),
+    guidelinesUrl: normalizeUrl(source.guidelinesUrl, defaults.guidelinesUrl)
+  };
+}
+
+function getTradUpMiddlemanPreset() {
+  const normalized = normalizeTradUpMiddlemanPreset(embedPresetsState.tradupMiddleman);
+  embedPresetsState.tradupMiddleman = normalized;
+  return normalized;
+}
+
+function buildTradUpMiddlemanPayload() {
+  const preset = getTradUpMiddlemanPreset();
+  const parsedColor = parseInt(preset.colorHex.replace('#', ''), 16);
+
+  const embed = new EmbedBuilder()
+    .setColor(Number.isNaN(parsedColor) ? TRADUP_EMBED_COLOR : parsedColor)
+    .setTitle(preset.title)
+    .setDescription(preset.introText)
+    .addFields(
+      { name: 'What is TradUp?', value: preset.whatIsText },
+      { name: 'How Safe Is TradUp MM?', value: preset.safetyText },
+      { name: 'How to Reduce Risk', value: preset.riskBullets.map((line) => `• ${line}`).join('\n') },
+      { name: 'What This Server Is About', value: preset.serverAboutText }
+    )
+    .setFooter({ text: preset.footerText })
+    .setTimestamp();
+
+  const row = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setLabel(preset.websiteLabel)
+      .setStyle(ButtonStyle.Link)
+      .setURL(preset.websiteUrl),
+    new ButtonBuilder()
+      .setLabel(preset.guidelinesLabel)
+      .setStyle(ButtonStyle.Link)
+      .setURL(preset.guidelinesUrl)
+  );
+
+  return {
+    preset,
+    payload: {
+      embeds: [embed],
+      components: [row]
+    }
+  };
 }
 
 function getTicketConfig(guildId) {
@@ -1985,6 +2177,225 @@ app.get('/api/servers', async (req, res) => {
   }
 });
 
+app.get('/api/perms/guilds', async (req, res) => {
+  if (!client || !client.isReady()) {
+    return res.status(503).json({ success: false, message: 'Bot is not online' });
+  }
+
+  try {
+    const guilds = [...client.guilds.cache.values()]
+      .map((guild) => ({
+        id: guild.id,
+        name: guild.name,
+        memberCount: guild.memberCount
+      }))
+      .sort((left, right) => right.memberCount - left.memberCount);
+
+    res.json({ success: true, guilds });
+  } catch (error) {
+    console.error('Permissions guild list error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to load guilds' });
+  }
+});
+
+app.get('/api/perms/roles', async (req, res) => {
+  if (!client || !client.isReady()) {
+    return res.status(503).json({ success: false, message: 'Bot is not online' });
+  }
+
+  const guildId = parseDiscordId(req.query.guildId);
+  if (!guildId) {
+    return res.status(400).json({ success: false, message: 'guildId query parameter is required' });
+  }
+
+  try {
+    const guild = await client.guilds.fetch(guildId);
+    await guild.members.fetch();
+
+    const roles = guild.roles.cache
+      .filter((role) => role.id !== guild.id)
+      .sort((left, right) => right.position - left.position)
+      .map((role) => {
+        const permissions = role.permissions.toArray().sort((left, right) => left.localeCompare(right));
+        const dangerousPermissions = permissions.filter((permissionName) => DANGEROUS_PERMISSION_NAMES.has(permissionName));
+
+        return {
+          id: role.id,
+          name: role.name,
+          color: role.hexColor,
+          memberCount: role.members.size,
+          position: role.position,
+          editable: role.editable,
+          managed: role.managed,
+          permissions,
+          dangerousPermissions,
+          hasDangerousPermissions: dangerousPermissions.length > 0
+        };
+      });
+
+    res.json({ success: true, guild: { id: guild.id, name: guild.name }, roles });
+  } catch (error) {
+    console.error('Permissions roles list error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to load roles' });
+  }
+});
+
+app.get('/api/perms/role', async (req, res) => {
+  if (!client || !client.isReady()) {
+    return res.status(503).json({ success: false, message: 'Bot is not online' });
+  }
+
+  const guildId = parseDiscordId(req.query.guildId);
+  const roleId = parseDiscordId(req.query.roleId);
+
+  if (!guildId || !roleId) {
+    return res.status(400).json({ success: false, message: 'guildId and roleId query parameters are required' });
+  }
+
+  try {
+    const guild = await client.guilds.fetch(guildId);
+    await guild.members.fetch();
+    const role = await guild.roles.fetch(roleId);
+
+    if (!role) {
+      return res.status(404).json({ success: false, message: 'Role not found' });
+    }
+
+    const permissions = role.permissions.toArray().sort((left, right) => left.localeCompare(right));
+    const dangerousPermissions = permissions.filter((permissionName) => DANGEROUS_PERMISSION_NAMES.has(permissionName));
+    const members = role.members.map((member) => ({
+      id: member.id,
+      tag: member.user.tag,
+      displayName: member.displayName
+    })).sort((left, right) => left.tag.localeCompare(right.tag));
+
+    res.json({
+      success: true,
+      role: {
+        id: role.id,
+        name: role.name,
+        color: role.hexColor,
+        memberCount: role.members.size,
+        editable: role.editable,
+        managed: role.managed,
+        permissions,
+        dangerousPermissions,
+        hasDangerousPermissions: dangerousPermissions.length > 0,
+        members
+      },
+      availablePermissions: ALL_PERMISSION_NAMES,
+      dangerousPermissionNames: [...DANGEROUS_PERMISSION_NAMES]
+    });
+  } catch (error) {
+    console.error('Permissions role detail error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to load role details' });
+  }
+});
+
+app.post('/api/perms/role/permissions', async (req, res) => {
+  if (!client || !client.isReady()) {
+    return res.status(503).json({ success: false, message: 'Bot is not online' });
+  }
+
+  const guildId = parseDiscordId(req.body.guildId);
+  const roleId = parseDiscordId(req.body.roleId);
+  const permissionNames = normalizePermissionNames(req.body.permissions);
+
+  if (!guildId || !roleId) {
+    return res.status(400).json({ success: false, message: 'guildId and roleId are required' });
+  }
+
+  try {
+    const guild = await client.guilds.fetch(guildId);
+    const role = await guild.roles.fetch(roleId);
+
+    if (!role) {
+      return res.status(404).json({ success: false, message: 'Role not found' });
+    }
+
+    if (role.managed || !role.editable) {
+      return res.status(403).json({ success: false, message: 'Role is managed by an integration or not editable by the bot' });
+    }
+
+    await role.setPermissions(permissionNames, 'Updated from Trade Central permissions manager');
+
+    res.json({ success: true, message: 'Role permissions updated', permissions: permissionNames });
+  } catch (error) {
+    console.error('Permissions update error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to update role permissions' });
+  }
+});
+
+app.post('/api/perms/role/add-member', async (req, res) => {
+  if (!client || !client.isReady()) {
+    return res.status(503).json({ success: false, message: 'Bot is not online' });
+  }
+
+  const guildId = parseDiscordId(req.body.guildId);
+  const roleId = parseDiscordId(req.body.roleId);
+  const userId = parseDiscordId(req.body.userId);
+
+  if (!guildId || !roleId || !userId) {
+    return res.status(400).json({ success: false, message: 'guildId, roleId, and userId are required' });
+  }
+
+  try {
+    const guild = await client.guilds.fetch(guildId);
+    const role = await guild.roles.fetch(roleId);
+
+    if (!role) {
+      return res.status(404).json({ success: false, message: 'Role not found' });
+    }
+
+    if (role.managed || !role.editable) {
+      return res.status(403).json({ success: false, message: 'Role is managed by an integration or not editable by the bot' });
+    }
+
+    const member = await guild.members.fetch(userId);
+    await member.roles.add(role, 'Added from Trade Central permissions manager');
+
+    res.json({ success: true, message: `Added ${member.user.tag} to ${role.name}` });
+  } catch (error) {
+    console.error('Add role member error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to add member to role' });
+  }
+});
+
+app.post('/api/perms/role/remove-member', async (req, res) => {
+  if (!client || !client.isReady()) {
+    return res.status(503).json({ success: false, message: 'Bot is not online' });
+  }
+
+  const guildId = parseDiscordId(req.body.guildId);
+  const roleId = parseDiscordId(req.body.roleId);
+  const userId = parseDiscordId(req.body.userId);
+
+  if (!guildId || !roleId || !userId) {
+    return res.status(400).json({ success: false, message: 'guildId, roleId, and userId are required' });
+  }
+
+  try {
+    const guild = await client.guilds.fetch(guildId);
+    const role = await guild.roles.fetch(roleId);
+
+    if (!role) {
+      return res.status(404).json({ success: false, message: 'Role not found' });
+    }
+
+    if (role.managed || !role.editable) {
+      return res.status(403).json({ success: false, message: 'Role is managed by an integration or not editable by the bot' });
+    }
+
+    const member = await guild.members.fetch(userId);
+    await member.roles.remove(role, 'Removed from Trade Central permissions manager');
+
+    res.json({ success: true, message: `Removed ${member.user.tag} from ${role.name}` });
+  } catch (error) {
+    console.error('Remove role member error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to remove member from role' });
+  }
+});
+
 // API: Bot control (start, stop, restart)
 app.post('/api/bot/control', async (req, res) => {
   const { action } = req.body;
@@ -2131,6 +2542,77 @@ app.post('/api/bot/controls/send-image', async (req, res) => {
   } catch (error) {
     console.error('Send image error:', error);
     res.status(500).json({ success: false, message: error.message || 'Failed to send image' });
+  }
+});
+
+app.get('/api/embed-presets/tradup-middleman', (req, res) => {
+  res.json({
+    success: true,
+    preset: getTradUpMiddlemanPreset()
+  });
+});
+
+app.post('/api/embed-presets/tradup-middleman', (req, res) => {
+  const normalized = normalizeTradUpMiddlemanPreset(req.body || {});
+  embedPresetsState.tradupMiddleman = normalized;
+  saveEmbedPresetsState();
+
+  res.json({
+    success: true,
+    message: 'Embed preset saved globally',
+    preset: normalized
+  });
+});
+
+app.post('/api/embed-presets/tradup-middleman/send', async (req, res) => {
+  const { channelId } = req.body || {};
+
+  if (!client || !client.isReady()) {
+    return res.status(503).json({ success: false, message: 'Bot is not online' });
+  }
+
+  if (!channelId) {
+    return res.status(400).json({ success: false, message: 'channelId is required' });
+  }
+
+  try {
+    const channel = await client.channels.fetch(String(channelId));
+    if (!channel || !channel.isTextBased() || typeof channel.send !== 'function') {
+      return res.status(400).json({ success: false, message: 'Invalid text channel' });
+    }
+
+    const { payload, preset } = buildTradUpMiddlemanPayload();
+    await channel.send(payload);
+    res.json({ success: true, message: `${preset.title} sent successfully` });
+  } catch (error) {
+    console.error('Send preset embed error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to send preset embed' });
+  }
+});
+
+app.post('/api/bot/controls/send-preset-embed', async (req, res) => {
+  const { channelId } = req.body || {};
+
+  if (!client || !client.isReady()) {
+    return res.status(503).json({ success: false, message: 'Bot is not online' });
+  }
+
+  if (!channelId) {
+    return res.status(400).json({ success: false, message: 'channelId is required' });
+  }
+
+  try {
+    const channel = await client.channels.fetch(String(channelId));
+    if (!channel || !channel.isTextBased() || typeof channel.send !== 'function') {
+      return res.status(400).json({ success: false, message: 'Invalid text channel' });
+    }
+
+    const { payload, preset } = buildTradUpMiddlemanPayload();
+    await channel.send(payload);
+    res.json({ success: true, message: `${preset.title} sent successfully` });
+  } catch (error) {
+    console.error('Send preset embed error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to send preset embed' });
   }
 });
 

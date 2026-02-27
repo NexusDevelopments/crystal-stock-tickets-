@@ -174,9 +174,9 @@ function BotStatus() {
             <div style={{ 
               marginTop: '1.5rem',
               padding: '1rem', 
-              background: 'rgba(135, 206, 250, 0.05)',
+              background: 'rgba(255, 255, 255, 0.05)',
               borderRadius: '8px',
-              border: '1px solid rgba(135, 206, 250, 0.2)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
               display: 'flex',
               alignItems: 'center',
               gap: '12px'
@@ -237,8 +237,8 @@ function BotStatus() {
               borderRadius: '8px',
               background: messageType === 'success' 
                 ? 'rgba(255, 255, 255, 0.1)' 
-                : 'rgba(255, 100, 100, 0.1)',
-              border: `1px solid ${messageType === 'success' ? '#fff' : '#ff6464'}`,
+                : 'rgba(255, 255, 255, 0.08)',
+              border: '1px solid rgba(255, 255, 255, 0.45)',
               fontWeight: '500'
             }}>
               {message}
