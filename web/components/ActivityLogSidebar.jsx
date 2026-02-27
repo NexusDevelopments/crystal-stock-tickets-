@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import logo from '../assets/crystal-logo.svg';
 
 function ActivityLogSidebar() {
   const [logs, setLogs] = useState([]);
@@ -51,8 +52,17 @@ function ActivityLogSidebar() {
   return (
     <div className="activity-log-sidebar">
       <div className="activity-log-header">
-        <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>Activity Log</div>
-        <div style={{ opacity: 0.6, fontSize: '0.75rem' }}>Recent actions</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <img
+            src={logo}
+            alt="TradeUp"
+            style={{ width: '26px', height: '26px', borderRadius: '6px' }}
+          />
+          <div>
+            <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>Activity Log</div>
+            <div style={{ opacity: 0.6, fontSize: '0.75rem' }}>Recent actions</div>
+          </div>
+        </div>
       </div>
       
       <div className="activity-log-content">
@@ -63,8 +73,15 @@ function ActivityLogSidebar() {
         ) : (
           logs.map((log) => (
             <div key={log.id} className="activity-log-item">
-              <div style={{ fontSize: '0.75rem', fontWeight: 500, marginBottom: '2px' }}>
-                {getActionLabel(log.action)}
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '4px' }}>
+                <img
+                  src={logo}
+                  alt="TradeUp"
+                  style={{ width: '18px', height: '18px', borderRadius: '4px', opacity: 0.9 }}
+                />
+                <div style={{ fontSize: '0.75rem', fontWeight: 500 }}>
+                  {getActionLabel(log.action)}
+                </div>
               </div>
               {log.presetName ? (
                 <div style={{ fontSize: '0.7rem', opacity: 0.7, marginBottom: '2px' }}>

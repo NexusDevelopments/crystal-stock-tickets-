@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import logo from '../assets/crystal-logo.svg';
 
 const DEFAULT_PRESET = {
   title: 'TradUp Middleman Guide',
@@ -247,7 +248,14 @@ function EmbedPresets() {
               background: message.type === 'success' ? 'rgba(255,255,255,0.08)' : 'rgba(255,100,100,0.12)'
             }}
           >
-            {message.text}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <img
+                src={logo}
+                alt="TradeUp"
+                style={{ width: '28px', height: '28px', borderRadius: '6px' }}
+              />
+              <span>{message.text}</span>
+            </div>
           </div>
         ) : null}
 

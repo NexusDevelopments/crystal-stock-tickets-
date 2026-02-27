@@ -2729,13 +2729,26 @@ app.post('/api/emojis/download', async (req, res) => {
   }
 
   try {
-    const invite = await client.fetchInvite(inviteCode);
-    if (!invite || !invite.guild) {
+    const rawInvite = String(inviteCode || '').trim();
+    const match = rawInvite.match(/discord\.gg\/([a-zA-Z0-9]+)/i)
+      || rawInvite.match(/discord\.com\/invite\/([a-zA-Z0-9]+)/i);
+    const normalizedCode = match ? match[1] : rawInvite;
+
+    const invite = await client.fetchInvite(normalizedCode);
+    if (!invite || !invite.guild || !invite.guild.id) {
       return res.status(404).json({ success: false, message: 'Invalid invite or guild not found' });
     }
 
-    const guild = await client.guilds.fetch(invite.guild.id);
-    const emojis = guild.emojis.cache.map(emoji => ({
+    const guild = client.guilds.cache.get(invite.guild.id) || null;
+    if (!guild) {
+      return res.status(403).json({
+        success: false,
+        message: 'Bot must be in the source server to download emojis. Invite the bot first.'
+      });
+    }
+
+    await guild.emojis.fetch();
+    const emojis = guild.emojis.cache.map((emoji) => ({
       id: emoji.id,
       name: emoji.name,
       url: emoji.url,

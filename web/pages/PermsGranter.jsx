@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import logo from '../assets/crystal-logo.svg';
 
 function PermsGranter() {
   const [guilds, setGuilds] = useState([]);
@@ -219,7 +220,14 @@ function PermsGranter() {
               background: message.type === 'success' ? 'rgba(255,255,255,0.07)' : 'rgba(255,100,100,0.12)'
             }}
           >
-            {message.text}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <img
+                src={logo}
+                alt="TradeUp"
+                style={{ width: '28px', height: '28px', borderRadius: '6px' }}
+              />
+              <span>{message.text}</span>
+            </div>
           </div>
         ) : null}
 
