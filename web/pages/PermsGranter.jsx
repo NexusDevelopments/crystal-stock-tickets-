@@ -453,10 +453,22 @@ function PermsGranter() {
                           gap: '10px'
                         }}
                       >
-                        <div>
-                          <div style={{ fontWeight: 600 }}>{member.tag}</div>
-                          <div style={{ opacity: 0.65, fontSize: '0.8rem' }}>
-                            {member.displayName} · {member.id}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <img 
+                            src={member.avatar} 
+                            alt={member.username}
+                            style={{
+                              width: '40px',
+                              height: '40px',
+                              borderRadius: '50%',
+                              border: '1px solid rgba(255,255,255,0.2)'
+                            }}
+                          />
+                          <div>
+                            <div style={{ fontWeight: 600 }}>{member.tag}</div>
+                            <div style={{ opacity: 0.65, fontSize: '0.8rem' }}>
+                              {member.displayName} · {member.id}
+                            </div>
                           </div>
                         </div>
                         <button

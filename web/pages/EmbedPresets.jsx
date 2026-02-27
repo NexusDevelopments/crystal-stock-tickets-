@@ -17,7 +17,10 @@ const DEFAULT_PRESET = {
 
 function EmbedPresets() {
   const [preset, setPreset] = useState(DEFAULT_PRESET);
+  const [savedPresets, setSavedPresets] = useState([]);
+  const [presetName, setPresetName] = useState('');
   const [loadingPreset, setLoadingPreset] = useState(true);
+  const [loadingSaved, setLoadingSaved] = useState(true);
   const [saving, setSaving] = useState(false);
   const [channelId, setChannelId] = useState('');
   const [sending, setSending] = useState(false);
@@ -44,8 +47,25 @@ function EmbedPresets() {
     setLoadingPreset(false);
   };
 
+  const loadSavedPresets = async () => {
+    setLoadingSaved(true);
+    try {
+      const response = await fetch('/api/embed-presets/saved');
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to load saved presets');
+      }
+
+      setSavedPresets(data.presets || []);
+    } catch (error) {
+      showMessage('error', error.message);
+    }
+    setLoadingSaved(false);
+  };
+
   useEffect(() => {
     loadPreset();
+    loadSavedPresets();
   }, []);
 
   const savePreset = async () => {
@@ -74,6 +94,105 @@ function EmbedPresets() {
       showMessage('error', error.message);
     }
     setSaving(false);
+  };
+
+  const saveAsNewPreset = async () => {
+    if (!presetName.trim()) {
+      showMessage('error', 'Please enter a preset name');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const response = await fetch('/api/embed-presets/saved', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: presetName.trim(),
+          preset: {
+            ...preset,
+            riskBullets: String(preset.riskBullets || '')
+              .split(/\r?\n/)
+              .map((line) => line.replace(/^[-•\s]+/, '').trim())
+              .filter(Boolean)
+          }
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to save preset');
+      }
+
+      showMessage('success', 'Preset saved successfully');
+      setPresetName('');
+      loadSavedPresets();
+    } catch (error) {
+      showMessage('error', error.message);
+    }
+    setSaving(false);
+  };
+
+  const loadSavedPreset = (savedPreset) => {
+    setPreset({
+      ...DEFAULT_PRESET,
+      ...savedPreset.preset,
+      riskBullets: Array.isArray(savedPreset.preset.riskBullets) 
+        ? savedPreset.preset.riskBullets 
+        : []
+    });
+    showMessage('success', `Loaded preset: ${savedPreset.name}`);
+  };
+
+  const deleteSavedPreset = async (presetId) => {
+    if (!confirm('Are you sure you want to delete this preset?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/embed-presets/saved/${presetId}`, {
+        method: 'DELETE'
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to delete preset');
+      }
+
+      showMessage('success', 'Preset deleted successfully');
+      loadSavedPresets();
+    } catch (error) {
+      showMessage('error', error.message);
+    }
+  };
+
+  const sendSavedPreset = async (presetId) => {
+    if (!channelId.trim()) {
+      showMessage('error', 'Please enter a channel ID');
+      return;
+    }
+
+    setSending(true);
+    try {
+      const response = await fetch('/api/embed-presets/saved/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          presetId,
+          channelId: channelId.trim()
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || 'Failed to send preset');
+      }
+
+      showMessage('success', data.message);
+    } catch (error) {
+      showMessage('error', error.message);
+    }
+    setSending(false);
   };
 
   const sendPreset = async () => {
@@ -119,6 +238,19 @@ function EmbedPresets() {
           </p>
         </div>
 
+        {message.text ? (
+          <div
+            className="card"
+            style={{
+              marginBottom: '1rem',
+              borderColor: message.type === 'success' ? 'rgba(255,255,255,0.4)' : 'rgba(255,100,100,0.5)',
+              background: message.type === 'success' ? 'rgba(255,255,255,0.08)' : 'rgba(255,100,100,0.12)'
+            }}
+          >
+            {message.text}
+          </div>
+        ) : null}
+
         {loadingPreset ? (
           <div className="card" style={{ marginBottom: '1rem' }}>Loading preset...</div>
         ) : null}
@@ -146,13 +278,32 @@ function EmbedPresets() {
               <input type="text" placeholder="Guidelines URL" value={preset.guidelinesUrl} onChange={(event) => setPreset((prev) => ({ ...prev, guidelinesUrl: event.target.value }))} style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.05)', color: '#fff' }} />
             </div>
 
-            <div style={{ marginTop: '0.9rem', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <div style={{ marginTop: '0.9rem', display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
               <button className="btn btn-primary" type="button" onClick={savePreset} disabled={saving}>
                 {saving ? 'Saving...' : 'Save Globally'}
               </button>
               <button className="btn" type="button" onClick={loadPreset}>
                 Reload Preset
               </button>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flex: 1 }}>
+                <input
+                  type="text"
+                  placeholder="Preset name..."
+                  value={presetName}
+                  onChange={(e) => setPresetName(e.target.value)}
+                  style={{
+                    padding: '10px',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    background: 'rgba(255,255,255,0.05)',
+                    color: '#fff',
+                    minWidth: '200px'
+                  }}
+                />
+                <button className="btn" type="button" onClick={saveAsNewPreset} disabled={saving}>
+                  {saving ? 'Saving...' : 'Save As New'}
+                </button>
+              </div>
             </div>
           </div>
         ) : null}
@@ -176,21 +327,65 @@ function EmbedPresets() {
           />
           <div style={{ marginTop: '0.8rem' }}>
             <button className="btn btn-primary" type="button" onClick={sendPreset} disabled={sending || loadingPreset}>
-              {sending ? 'Sending...' : 'Send Saved Preset'}
+              {sending ? 'Sending...' : 'Send Current Preset'}
             </button>
           </div>
         </div>
 
-        {message.text ? (
-          <div
-            className="card"
-            style={{
-              marginBottom: '1rem',
-              borderColor: message.type === 'success' ? 'rgba(255,255,255,0.4)' : 'rgba(255,100,100,0.5)',
-              background: message.type === 'success' ? 'rgba(255,255,255,0.08)' : 'rgba(255,100,100,0.12)'
-            }}
-          >
-            {message.text}
+        {!loadingSaved && savedPresets.length > 0 ? (
+          <div className="card" style={{ marginBottom: '1rem' }}>
+            <h2 style={{ fontSize: '1.2rem', marginBottom: '0.8rem' }}>Saved Presets ({savedPresets.length})</h2>
+            
+            <div style={{ display: 'grid', gap: '0.7rem' }}>
+              {savedPresets.map((saved) => (
+                <div
+                  key={saved.id}
+                  style={{
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    background: 'rgba(255,255,255,0.03)'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                    <div>
+                      <div style={{ fontWeight: 600, marginBottom: '4px' }}>{saved.name}</div>
+                      <div style={{ opacity: 0.7, fontSize: '0.85rem' }}>
+                        {saved.preset.title} • Created {new Date(saved.createdAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                      <button
+                        className="btn"
+                        onClick={() => loadSavedPreset(saved)}
+                        style={{ padding: '7px 12px' }}
+                      >
+                        Load Preset
+                      </button>
+                      <button
+                        className="btn"
+                        onClick={() => sendSavedPreset(saved.id)}
+                        disabled={sending || !channelId.trim()}
+                        style={{ padding: '7px 12px' }}
+                      >
+                        Send
+                      </button>
+                      <button
+                        className="btn"
+                        onClick={() => deleteSavedPreset(saved.id)}
+                        style={{ 
+                          padding: '7px 12px',
+                          background: 'rgba(255,100,100,0.1)',
+                          borderColor: 'rgba(255,100,100,0.3)'
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ) : null}
 

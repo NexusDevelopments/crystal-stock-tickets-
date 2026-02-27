@@ -66,8 +66,11 @@ let ticketsState = {
   transcripts: {}
 };
 let embedPresetsState = {
-  tradupMiddleman: null
+  tradupMiddleman: null,
+  savedPresets: []
 };
+
+let activityLogs = [];
 
 function getDefaultTradUpMiddlemanPreset() {
   return {
@@ -121,7 +124,8 @@ function saveTicketsState() {
 
 function loadEmbedPresetsState() {
   embedPresetsState = {
-    tradupMiddleman: getDefaultTradUpMiddlemanPreset()
+    tradupMiddleman: getDefaultTradUpMiddlemanPreset(),
+    savedPresets: []
   };
 
   if (!fs.existsSync(EMBED_PRESETS_PATH)) return;
@@ -137,9 +141,27 @@ function loadEmbedPresetsState() {
         ...parsed.tradupMiddleman
       };
     }
+    
+    if (Array.isArray(parsed.savedPresets)) {
+      embedPresetsState.savedPresets = parsed.savedPresets;
+    }
   } catch (error) {
     console.error('Failed to load embed presets:', error);
   }
+}
+
+function logActivity(action, details = {}) {
+  const log = {
+    id: Date.now() + Math.random().toString(36).substr(2, 9),
+    timestamp: new Date().toISOString(),
+    action,
+    ...details
+  };
+  activityLogs.unshift(log);
+  if (activityLogs.length > 100) {
+    activityLogs = activityLogs.slice(0, 100);
+  }
+  return log;
 }
 
 function saveEmbedPresetsState() {
@@ -399,8 +421,8 @@ function getTradUpMiddlemanPreset() {
   return normalized;
 }
 
-function buildTradUpMiddlemanPayload() {
-  const preset = getTradUpMiddlemanPreset();
+function buildTradUpMiddlemanPayload(customPreset = null) {
+  const preset = customPreset || getTradUpMiddlemanPreset();
   const parsedColor = parseInt(preset.colorHex.replace('#', ''), 16);
 
   const embed = new EmbedBuilder()
@@ -2264,7 +2286,9 @@ app.get('/api/perms/role', async (req, res) => {
     const members = role.members.map((member) => ({
       id: member.id,
       tag: member.user.tag,
-      displayName: member.displayName
+      displayName: member.displayName,
+      username: member.user.username,
+      avatar: member.user.displayAvatarURL({ size: 128, extension: 'png' })
     })).sort((left, right) => left.tag.localeCompare(right.tag));
 
     res.json({
@@ -2581,10 +2605,202 @@ app.post('/api/embed-presets/tradup-middleman/send', async (req, res) => {
 
     const { payload, preset } = buildTradUpMiddlemanPayload();
     await channel.send(payload);
+    logActivity('preset_sent', { presetName: preset.title, channelId });
     res.json({ success: true, message: `${preset.title} sent successfully` });
   } catch (error) {
     console.error('Send preset embed error:', error);
     res.status(500).json({ success: false, message: error.message || 'Failed to send preset embed' });
+  }
+});
+
+// API: Saved embed presets
+app.get('/api/embed-presets/saved', (req, res) => {
+  res.json({
+    success: true,
+    presets: embedPresetsState.savedPresets || []
+  });
+});
+
+app.post('/api/embed-presets/saved', (req, res) => {
+  try {
+    const { name, preset } = req.body || {};
+    
+    if (!name || !preset || typeof preset !== 'object') {
+      return res.status(400).json({ success: false, message: 'name and preset object are required' });
+    }
+
+    const normalized = normalizeTradUpMiddlemanPreset(preset);
+    const newPreset = {
+      id: Date.now() + Math.random().toString(36).substr(2, 9),
+      name: String(name).trim().slice(0, 100),
+      createdAt: new Date().toISOString(),
+      preset: normalized
+    };
+
+    embedPresetsState.savedPresets.push(newPreset);
+    saveEmbedPresetsState();
+    logActivity('preset_saved', { presetName: newPreset.name, presetId: newPreset.id });
+
+    res.json({
+      success: true,
+      message: 'Preset saved successfully',
+      preset: newPreset
+    });
+  } catch (error) {
+    console.error('Save preset error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to save preset' });
+  }
+});
+
+app.delete('/api/embed-presets/saved/:id', (req, res) => {
+  try {
+    const { id } = req.params;
+    const index = embedPresetsState.savedPresets.findIndex(p => p.id === id);
+    
+    if (index === -1) {
+      return res.status(404).json({ success: false, message: 'Preset not found' });
+    }
+
+    const deleted = embedPresetsState.savedPresets.splice(index, 1)[0];
+    saveEmbedPresetsState();
+    logActivity('preset_deleted', { presetName: deleted.name, presetId: deleted.id });
+
+    res.json({
+      success: true,
+      message: 'Preset deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete preset error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to delete preset' });
+  }
+});
+
+app.post('/api/embed-presets/saved/send', async (req, res) => {
+  const { presetId, channelId } = req.body || {};
+
+  if (!client || !client.isReady()) {
+    return res.status(503).json({ success: false, message: 'Bot is not online' });
+  }
+
+  if (!presetId || !channelId) {
+    return res.status(400).json({ success: false, message: 'presetId and channelId are required' });
+  }
+
+  try {
+    const savedPreset = embedPresetsState.savedPresets.find(p => p.id === presetId);
+    if (!savedPreset) {
+      return res.status(404).json({ success: false, message: 'Preset not found' });
+    }
+
+    const channel = await client.channels.fetch(String(channelId));
+    if (!channel || !channel.isTextBased() || typeof channel.send !== 'function') {
+      return res.status(400).json({ success: false, message: 'Invalid text channel' });
+    }
+
+    const { payload } = buildTradUpMiddlemanPayload(savedPreset.preset);
+    await channel.send(payload);
+    logActivity('saved_preset_sent', { presetName: savedPreset.name, presetId, channelId });
+    res.json({ success: true, message: `${savedPreset.name} sent successfully` });
+  } catch (error) {
+    console.error('Send saved preset error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to send preset' });
+  }
+});
+
+// API: Activity logs
+app.get('/api/activity-logs', (req, res) => {
+  const limit = Math.min(parseInt(req.query.limit) || 50, 100);
+  res.json({
+    success: true,
+    logs: activityLogs.slice(0, limit)
+  });
+});
+
+// API: Emoji management
+app.post('/api/emojis/download', async (req, res) => {
+  const { inviteCode } = req.body || {};
+
+  if (!client || !client.isReady()) {
+    return res.status(503).json({ success: false, message: 'Bot is not online' });
+  }
+
+  if (!inviteCode) {
+    return res.status(400).json({ success: false, message: 'inviteCode is required' });
+  }
+
+  try {
+    const invite = await client.fetchInvite(inviteCode);
+    if (!invite || !invite.guild) {
+      return res.status(404).json({ success: false, message: 'Invalid invite or guild not found' });
+    }
+
+    const guild = await client.guilds.fetch(invite.guild.id);
+    const emojis = guild.emojis.cache.map(emoji => ({
+      id: emoji.id,
+      name: emoji.name,
+      url: emoji.url,
+      animated: emoji.animated
+    }));
+
+    logActivity('emojis_downloaded', { guildName: guild.name, guildId: guild.id, count: emojis.length });
+
+    res.json({
+      success: true,
+      guildName: guild.name,
+      emojis
+    });
+  } catch (error) {
+    console.error('Download emojis error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to download emojis' });
+  }
+});
+
+app.post('/api/emojis/upload', async (req, res) => {
+  const { guildId, emojis } = req.body || {};
+
+  if (!client || !client.isReady()) {
+    return res.status(503).json({ success: false, message: 'Bot is not online' });
+  }
+
+  if (!guildId || !Array.isArray(emojis) || emojis.length === 0) {
+    return res.status(400).json({ success: false, message: 'guildId and emojis array are required' });
+  }
+
+  try {
+    const guild = await client.guilds.fetch(guildId);
+    const results = [];
+    const errors = [];
+
+    for (const emoji of emojis) {
+      try {
+        const created = await guild.emojis.create({
+          attachment: emoji.url,
+          name: emoji.name
+        });
+        results.push({
+          name: emoji.name,
+          id: created.id,
+          success: true
+        });
+      } catch (err) {
+        errors.push({
+          name: emoji.name,
+          error: err.message
+        });
+      }
+    }
+
+    logActivity('emojis_uploaded', { guildId, uploaded: results.length, failed: errors.length });
+
+    res.json({
+      success: true,
+      message: `Uploaded ${results.length} emojis${errors.length > 0 ? `, ${errors.length} failed` : ''}`,
+      uploaded: results,
+      errors
+    });
+  } catch (error) {
+    console.error('Upload emojis error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to upload emojis' });
   }
 });
 

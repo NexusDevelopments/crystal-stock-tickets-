@@ -124,6 +124,7 @@ body {
 
 .global-page-region {
   margin-left: 260px;
+  margin-right: 200px;
   min-height: 100vh;
 }
 
@@ -541,6 +542,7 @@ body {
 
   .global-page-region {
     margin-left: 0;
+    margin-right: 0;
   }
 
   .home-btn {
@@ -558,4 +560,66 @@ body {
   .btn-subtitle {
     font-size: 0.8rem;
   }
+  
+  .activity-log-sidebar {
+    display: none;
+  }
+}
+
+/* Activity Log Sidebar */
+.activity-log-sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 200px;
+  background: rgba(12, 12, 12, 0.96);
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
+  overflow-y: auto;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+}
+
+.activity-log-header {
+  padding: 16px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.activity-log-content {
+  padding: 8px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.activity-log-item {
+  padding: 10px;
+  margin-bottom: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.activity-log-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.activity-log-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.activity-log-content::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.activity-log-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+
+.activity-log-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
 }
