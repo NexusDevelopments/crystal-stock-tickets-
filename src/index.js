@@ -2953,7 +2953,7 @@ app.post('/api/embed-presets/tradup-middleman', (req, res) => {
 });
 
 app.post('/api/embed-presets/tradup-middleman/send', async (req, res) => {
-  const { channelId } = req.body || {};
+  const { channelId, preset } = req.body || {};
 
   if (!client || !client.isReady()) {
     return res.status(503).json({ success: false, message: 'Bot is not online' });
@@ -2969,10 +2969,13 @@ app.post('/api/embed-presets/tradup-middleman/send', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid text channel' });
     }
 
-    const { payload, preset } = buildTradUpMiddlemanPayload();
+    // Use the provided preset from the request, or fall back to saved preset
+    const customPreset = preset ? normalizeTradUpMiddlemanPreset(preset) : null;
+    const { payload, preset: usedPreset } = buildTradUpMiddlemanPayload(customPreset);
+    
     await channel.send(payload);
-    logActivity('preset_sent', { presetName: preset.title, channelId });
-    res.json({ success: true, message: `${preset.title} sent successfully` });
+    logActivity('preset_sent', { presetName: usedPreset.title, channelId });
+    res.json({ success: true, message: `${usedPreset.title} sent successfully` });
   } catch (error) {
     console.error('Send preset embed error:', error);
     res.status(500).json({ success: false, message: error.message || 'Failed to send preset embed' });

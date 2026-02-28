@@ -208,7 +208,16 @@ function EmbedPresets() {
       const response = await fetch('/api/embed-presets/tradup-middleman/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ channelId: channelId.trim() })
+        body: JSON.stringify({ 
+          channelId: channelId.trim(),
+          preset: {
+            ...preset,
+            riskBullets: String(preset.riskBullets || '')
+              .split(/\r?\n/)
+              .map((line) => line.replace(/^[-•\s]+/, '').trim())
+              .filter(Boolean)
+          }
+        })
       });
 
       const data = await response.json();
