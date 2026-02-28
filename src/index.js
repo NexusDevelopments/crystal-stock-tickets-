@@ -2106,12 +2106,30 @@ if (BOT_TOKEN) {
 const app = express();
 app.use(express.json());
 
-// Serve static files from the React build
-app.use(express.static(path.join(__dirname, '..', 'dist')));
+// Serve static files from the React build with cache control
+app.use(express.static(path.join(__dirname, '..', 'dist'), {
+  setHeaders: (res, path) => {
+    // Prevent caching for HTML files so users always get the latest version
+    if (path.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    } else if (path.endsWith('.css') || path.endsWith('.js')) {
+      // Allow short-term caching for CSS/JS but check for updates
+      res.setHeader('Cache-Control', 'public, max-age=300, must-revalidate');
+    }
+  }
+}));
 
 // API: Health check
 app.get('/api/health', (req, res) => {
-  res.json({ ok: true, service: 'trade-central-bot', botConfigured: Boolean(BOT_TOKEN) });
+  res.json({ 
+    ok: true, 
+    service: 'trade-central-bot', 
+    botConfigured: Boolean(BOT_TOKEN),
+    deployedAt: serverStartTime,
+    version: '1.0.0'
+  });
 });
 
 // API: Bot status
@@ -3528,6 +3546,10 @@ app.get('*', (req, res) => {
   
   // Check if the built React app exists
   if (fs.existsSync(indexPath)) {
+    // Prevent caching of index.html so users always get latest version
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     res.sendFile(indexPath);
   } else {
     // Fallback if build doesn't exist
