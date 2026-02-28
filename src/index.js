@@ -2444,6 +2444,346 @@ app.post('/api/perms/role/remove-member', async (req, res) => {
   }
 });
 
+// API: Channel management
+app.get('/api/channels', async (req, res) => {
+  if (!client || !client.isReady()) {
+    return res.status(503).json({ success: false, message: 'Bot is not online' });
+  }
+
+  const guildId = parseDiscordId(req.query.guildId);
+  if (!guildId) {
+    return res.status(400).json({ success: false, message: 'guildId query parameter is required' });
+  }
+
+  try {
+    const guild = await client.guilds.fetch(guildId);
+    
+    const channels = guild.channels.cache
+      .filter((ch) => ch.type === ChannelType.GuildText || ch.type === ChannelType.GuildVoice || ch.type === ChannelType.GuildCategory)
+      .map((ch) => ({
+        id: ch.id,
+        name: ch.name,
+        type: ch.type === ChannelType.GuildCategory ? 'category' : ch.type === ChannelType.GuildVoice ? 'voice' : 'text',
+        position: ch.position,
+        parentId: ch.parentId
+      }))
+      .sort((a, b) => a.position - b.position);
+
+    const roles = guild.roles.cache
+      .filter((role) => role.id !== guild.id)
+      .sort((left, right) => right.position - left.position)
+      .map((role) => ({
+        id: role.id,
+        name: role.name,
+        color: role.hexColor
+      }));
+
+    res.json({ success: true, channels, roles });
+  } catch (error) {
+    console.error('Channels list error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to load channels' });
+  }
+});
+
+app.get('/api/channels/:channelId/permissions', async (req, res) => {
+  if (!client || !client.isReady()) {
+    return res.status(503).json({ success: false, message: 'Bot is not online' });
+  }
+
+  const guildId = parseDiscordId(req.query.guildId);
+  const channelId = parseDiscordId(req.params.channelId);
+
+  if (!guildId || !channelId) {
+    return res.status(400).json({ success: false, message: 'guildId and channelId are required' });
+  }
+
+  try {
+    const guild = await client.guilds.fetch(guildId);
+    const channel = await guild.channels.fetch(channelId);
+
+    if (!channel) {
+      return res.status(404).json({ success: false, message: 'Channel not found' });
+    }
+
+    const permissions = channel.permissionOverwrites.cache.map((overwrite) => {
+      const allow = overwrite.allow.toArray();
+      const deny = overwrite.deny.toArray();
+      
+      return {
+        roleId: overwrite.id,
+        allow,
+        deny
+      };
+    });
+
+    res.json({ success: true, permissions });
+  } catch (error) {
+    console.error('Channel permissions error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to load channel permissions' });
+  }
+});
+
+app.put('/api/channels/:channelId/permissions', async (req, res) => {
+  if (!client || !client.isReady()) {
+    return res.status(503).json({ success: false, message: 'Bot is not online' });
+  }
+
+  const guildId = parseDiscordId(req.body.guildId);
+  const channelId = parseDiscordId(req.params.channelId);
+  const roleId = parseDiscordId(req.body.roleId);
+  const { permission, value } = req.body;
+
+  if (!guildId || !channelId || !roleId || !permission) {
+    return res.status(400).json({ success: false, message: 'guildId, channelId, roleId, and permission are required' });
+  }
+
+  try {
+    const guild = await client.guilds.fetch(guildId);
+    const channel = await guild.channels.fetch(channelId);
+
+    if (!channel) {
+      return res.status(404).json({ success: false, message: 'Channel not found' });
+    }
+
+    const currentOverwrite = channel.permissionOverwrites.cache.get(roleId);
+    const currentAllow = currentOverwrite?.allow.toArray() || [];
+    const currentDeny = currentOverwrite?.deny.toArray() || [];
+
+    let newAllow = [...currentAllow];
+    let newDeny = [...currentDeny];
+
+    if (value === 'allow') {
+      if (!newAllow.includes(permission)) newAllow.push(permission);
+      newDeny = newDeny.filter((p) => p !== permission);
+    } else if (value === 'deny') {
+      if (!newDeny.includes(permission)) newDeny.push(permission);
+      newAllow = newAllow.filter((p) => p !== permission);
+    } else {
+      newAllow = newAllow.filter((p) => p !== permission);
+      newDeny = newDeny.filter((p) => p !== permission);
+    }
+
+    await channel.permissionOverwrites.edit(roleId, {
+      [permission]: value === 'allow' ? true : value === 'deny' ? false : null
+    });
+
+    res.json({ success: true, message: 'Permission updated' });
+  } catch (error) {
+    console.error('Update channel permission error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to update permission' });
+  }
+});
+
+app.post('/api/channels/create', async (req, res) => {
+  if (!client || !client.isReady()) {
+    return res.status(503).json({ success: false, message: 'Bot is not online' });
+  }
+
+  const guildId = parseDiscordId(req.body.guildId);
+  const { type, name, categoryId } = req.body;
+
+  if (!guildId || !name) {
+    return res.status(400).json({ success: false, message: 'guildId and name are required' });
+  }
+
+  try {
+    const guild = await client.guilds.fetch(guildId);
+
+    const channelType = 
+      type === 'category' ? ChannelType.GuildCategory :
+      type === 'voice' ? ChannelType.GuildVoice :
+      ChannelType.GuildText;
+
+    const options = {
+      name: name.trim(),
+      type: channelType
+    };
+
+    if (categoryId && type !== 'category') {
+      options.parent = parseDiscordId(categoryId);
+    }
+
+    const newChannel = await guild.channels.create(options);
+
+    logActivity('channel_created', { 
+      channelName: newChannel.name, 
+      channelId: newChannel.id, 
+      channelType: type,
+      guildName: guild.name 
+    });
+
+    res.json({ success: true, message: 'Channel created successfully', channel: { id: newChannel.id, name: newChannel.name } });
+  } catch (error) {
+    console.error('Create channel error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to create channel' });
+  }
+});
+
+app.delete('/api/channels/:channelId', async (req, res) => {
+  if (!client || !client.isReady()) {
+    return res.status(503).json({ success: false, message: 'Bot is not online' });
+  }
+
+  const guildId = parseDiscordId(req.query.guildId);
+  const channelId = parseDiscordId(req.params.channelId);
+
+  if (!guildId || !channelId) {
+    return res.status(400).json({ success: false, message: 'guildId and channelId are required' });
+  }
+
+  try {
+    const guild = await client.guilds.fetch(guildId);
+    const channel = await guild.channels.fetch(channelId);
+
+    if (!channel) {
+      return res.status(404).json({ success: false, message: 'Channel not found' });
+    }
+
+    const channelName = channel.name;
+    await channel.delete('Deleted from Trade Central channel manager');
+
+    logActivity('channel_deleted', { 
+      channelName, 
+      channelId,
+      guildName: guild.name 
+    });
+
+    res.json({ success: true, message: 'Channel deleted successfully' });
+  } catch (error) {
+    console.error('Delete channel error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to delete channel' });
+  }
+});
+
+app.put('/api/channels/:channelId/rename', async (req, res) => {
+  if (!client || !client.isReady()) {
+    return res.status(503).json({ success: false, message: 'Bot is not online' });
+  }
+
+  const guildId = parseDiscordId(req.body.guildId);
+  const channelId = parseDiscordId(req.params.channelId);
+  const { name } = req.body;
+
+  if (!guildId || !channelId || !name) {
+    return res.status(400).json({ success: false, message: 'guildId, channelId, and name are required' });
+  }
+
+  try {
+    const guild = await client.guilds.fetch(guildId);
+    const channel = await guild.channels.fetch(channelId);
+
+    if (!channel) {
+      return res.status(404).json({ success: false, message: 'Channel not found' });
+    }
+
+    const oldName = channel.name;
+    await channel.setName(name.trim(), 'Renamed from Trade Central channel manager');
+
+    logActivity('channel_renamed', { 
+      oldName, 
+      newName: name.trim(), 
+      channelId,
+      guildName: guild.name 
+    });
+
+    res.json({ success: true, message: 'Channel renamed successfully' });
+  } catch (error) {
+    console.error('Rename channel error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to rename channel' });
+  }
+});
+
+app.post('/api/channels/bulk-hide', async (req, res) => {
+  if (!client || !client.isReady()) {
+    return res.status(503).json({ success: false, message: 'Bot is not online' });
+  }
+
+  const guildId = parseDiscordId(req.body.guildId);
+
+  if (!guildId) {
+    return res.status(400).json({ success: false, message: 'guildId is required' });
+  }
+
+  try {
+    const guild = await client.guilds.fetch(guildId);
+    const everyoneRole = guild.roles.everyone;
+
+    const channels = guild.channels.cache.filter(
+      (ch) => ch.type === ChannelType.GuildText || ch.type === ChannelType.GuildVoice
+    );
+
+    let count = 0;
+    for (const [, channel] of channels) {
+      try {
+        await channel.permissionOverwrites.edit(everyoneRole, {
+          ViewChannel: false
+        });
+        count++;
+        await sleep(100);
+      } catch (err) {
+        console.error(`Failed to hide channel ${channel.name}:`, err);
+      }
+    }
+
+    logActivity('channels_bulk_hidden', { 
+      count, 
+      guildName: guild.name 
+    });
+
+    res.json({ success: true, message: `Hidden ${count} channels`, count });
+  } catch (error) {
+    console.error('Bulk hide channels error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to hide channels' });
+  }
+});
+
+app.post('/api/channels/bulk-show', async (req, res) => {
+  if (!client || !client.isReady()) {
+    return res.status(503).json({ success: false, message: 'Bot is not online' });
+  }
+
+  const guildId = parseDiscordId(req.body.guildId);
+
+  if (!guildId) {
+    return res.status(400).json({ success: false, message: 'guildId is required' });
+  }
+
+  try {
+    const guild = await client.guilds.fetch(guildId);
+    const everyoneRole = guild.roles.everyone;
+
+    const channels = guild.channels.cache.filter(
+      (ch) => (ch.type === ChannelType.GuildText || ch.type === ChannelType.GuildVoice) &&
+      !ch.name.toLowerCase().includes('staff') &&
+      !ch.name.toLowerCase().includes('admin') &&
+      !ch.name.toLowerCase().includes('mod')
+    );
+
+    let count = 0;
+    for (const [, channel] of channels) {
+      try {
+        await channel.permissionOverwrites.edit(everyoneRole, {
+          ViewChannel: true
+        });
+        count++;
+        await sleep(100);
+      } catch (err) {
+        console.error(`Failed to show channel ${channel.name}:`, err);
+      }
+    }
+
+    logActivity('channels_bulk_shown', { 
+      count, 
+      guildName: guild.name 
+    });
+
+    res.json({ success: true, message: `Restored view permissions for ${count} channels`, count });
+  } catch (error) {
+    console.error('Bulk show channels error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Failed to show channels' });
+  }
+});
+
 // API: Bot control (start, stop, restart)
 app.post('/api/bot/control', async (req, res) => {
   const { action } = req.body;

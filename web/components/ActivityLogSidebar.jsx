@@ -32,7 +32,12 @@ function ActivityLogSidebar() {
       emojis_downloaded: 'Emojis Downloaded',
       emojis_uploaded: 'Emojis Uploaded',
       site_updated: 'Site Updated',
-      code_push: 'Code Push'
+      code_push: 'Code Push',
+      channel_created: 'Channel Created',
+      channel_deleted: 'Channel Deleted',
+      channel_renamed: 'Channel Renamed',
+      channels_bulk_hidden: 'Channels Hidden',
+      channels_bulk_shown: 'Channels Shown'
     };
     return labels[action] || action;
   };

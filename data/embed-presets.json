@@ -1,0 +1,23 @@
+{
+  "tradupMiddleman": {
+    "title": "TradUp Middleman Guide",
+    "introText": "Trusted middleman workflow for Roblox game trades. Use this guide before every deal to stay safe.",
+    "whatIsText": "TradUp is a Roblox middleman community that helps buyers and sellers complete trades with reduced scam risk by using verified middlemen and clear proof steps.",
+    "safetyText": "Safety depends on following process: confirm the middleman role, verify ticket logs, and never trade through DMs without an approved ticket.",
+    "riskBullets": [
+      "Open a proper ticket",
+      "Verify middleman role + ID",
+      "Confirm trade terms in chat",
+      "Keep screenshots/proof",
+      "Never rush high-value trades"
+    ],
+    "serverAboutText": "TradUp focuses on secure **MiddleMan services for Roblox games** and smoother trading between trusted members.",
+    "footerText": "TradUp • Secure Roblox MiddleMan Trading",
+    "colorHex": "#f4c542",
+    "websiteLabel": "Official Website",
+    "websiteUrl": "https://discord.com",
+    "guidelinesLabel": "Guidelines",
+    "guidelinesUrl": "https://discord.com"
+  },
+  "savedPresets": []
+}

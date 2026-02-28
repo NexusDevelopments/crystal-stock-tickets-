@@ -9,6 +9,7 @@ import TicketTranscript from './pages/TicketTranscript';
 import PermsGranter from './pages/PermsGranter';
 import EmbedPresets from './pages/EmbedPresets';
 import Emojis from './pages/Emojis';
+import ChannelConfigs from './pages/ChannelConfigs';
 import ActivityLogSidebar from './components/ActivityLogSidebar';
 
 function App() {
@@ -67,6 +68,7 @@ function App() {
             <NavLink to="/logs" className={({ isActive }) => `side-link${isActive ? ' active' : ''}`}>Ticket Logs</NavLink>
             <NavLink to="/perms" className={({ isActive }) => `side-link${isActive ? ' active' : ''}`}>Perms Granter</NavLink>
             <NavLink to="/embedpresets" className={({ isActive }) => `side-link${isActive ? ' active' : ''}`}>Embed Presets</NavLink>
+            <NavLink to="/channels" className={({ isActive }) => `side-link${isActive ? ' active' : ''}`}>Channel Configs</NavLink>
             <NavLink to="/emojis" className={({ isActive }) => `side-link${isActive ? ' active' : ''}`}>Emojis</NavLink>
           </nav>
         </aside>
@@ -81,6 +83,7 @@ function App() {
             <Route path="/id" element={<TicketTranscript />} />
             <Route path="/botcontrols" element={<BotControls />} />
             <Route path="/perms" element={<PermsGranter />} />
+            <Route path="/channels" element={<ChannelConfigs />} />
             <Route path="/embedpresets" element={<EmbedPresets />} />
             <Route path="/emojis" element={<Emojis />} />
           </Routes>
