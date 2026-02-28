@@ -254,6 +254,11 @@ body {
   transform: none !important;
 }
 
+.btn-small {
+  padding: 6px 14px;
+  font-size: 0.85rem;
+}
+
 /* Badge Styles */
 .badge {
   display: inline-flex;

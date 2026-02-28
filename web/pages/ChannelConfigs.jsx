@@ -408,8 +408,7 @@ function ChannelConfigs() {
                         <button
                           type="button"
                           onClick={() => deleteChannel(cat.id, cat.name)}
-                          className="btn"
-                          style={{ padding: '5px 12px', fontSize: '0.85rem' }}
+                          className="btn btn-small"
                         >
                           Delete
                         </button>
@@ -456,8 +455,7 @@ function ChannelConfigs() {
                               setRenameValue(ch.name);
                               setRenameModal(true);
                             }}
-                            className="btn"
-                            style={{ padding: '5px 12px', fontSize: '0.85rem' }}
+                            className="btn btn-small"
                           >
                             Rename
                           </button>
@@ -467,8 +465,7 @@ function ChannelConfigs() {
                               e.stopPropagation();
                               deleteChannel(ch.id, ch.name);
                             }}
-                            className="btn"
-                            style={{ padding: '5px 12px', fontSize: '0.85rem' }}
+                            className="btn btn-small"
                           >
                             Delete
                           </button>
@@ -516,8 +513,7 @@ function ChannelConfigs() {
                               setRenameValue(ch.name);
                               setRenameModal(true);
                             }}
-                            className="btn"
-                            style={{ padding: '5px 12px', fontSize: '0.85rem' }}
+                            className="btn btn-small"
                           >
                             Rename
                           </button>
@@ -527,8 +523,7 @@ function ChannelConfigs() {
                               e.stopPropagation();
                               deleteChannel(ch.id, ch.name);
                             }}
-                            className="btn"
-                            style={{ padding: '5px 12px', fontSize: '0.85rem' }}
+                            className="btn btn-small"
                           >
                             Delete
                           </button>
@@ -722,7 +717,7 @@ function ChannelConfigs() {
                 type="button"
                 onClick={() => setShowCreateModal(false)}
                 className="btn"
-                style={{ flex: 1, background: 'rgba(255,255,255,0.06)' }}
+                style={{ flex: 1 }}
               >
                 Cancel
               </button>
@@ -781,7 +776,7 @@ function ChannelConfigs() {
                 type="button"
                 onClick={() => setRenameModal(false)}
                 className="btn"
-                style={{ flex: 1, background: 'rgba(255,255,255,0.06)' }}
+                style={{ flex: 1 }}
               >
                 Cancel
               </button>
