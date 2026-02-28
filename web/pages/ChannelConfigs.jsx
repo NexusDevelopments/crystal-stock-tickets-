@@ -266,187 +266,150 @@ function ChannelConfigs() {
   const voiceChannels = channels.filter((ch) => ch.type === 'voice');
 
   return (
-    <div className="global-page-region" style={{ padding: '2rem' }}>
-      <h1 style={{ marginBottom: '2rem', fontSize: '2.5rem' }}>Channel Configs</h1>
-
-      {message.text && (
-        <div
-          style={{
-            marginBottom: '1.5rem',
-            padding: '1rem',
-            borderRadius: '0.5rem',
-            background: message.type === 'success' ? 'rgba(76, 175, 80, 0.1)' : 'rgba(244, 67, 54, 0.1)',
-            border: `1px solid ${message.type === 'success' ? 'rgba(76, 175, 80, 0.3)' : 'rgba(244, 67, 54, 0.3)'}`,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '1rem'
-          }}
-        >
-          <img src={logo} alt="Logo" style={{ width: '24px', height: '24px' }} />
-          <span style={{ color: message.type === 'success' ? '#4caf50' : '#f44336' }}>
-            {message.text}
-          </span>
+    <>
+      <div className="animated-bg"></div>
+      <div className="container" style={{ padding: '34px 20px', maxWidth: '1300px' }}>
+        <div className="fade-in" style={{ marginBottom: '1rem' }}>
+          <h1 style={{ fontSize: '2.2rem', fontWeight: 800, marginBottom: '0.4rem' }}>Channel Configs</h1>
+          <p style={{ opacity: 0.72 }}>
+            Manage channels, categories, permissions, and bulk operations for your Discord server.
+          </p>
         </div>
-      )}
 
-      <div className="glass-card" style={{ marginBottom: '2rem', padding: '1.5rem' }}>
-        <h3 style={{ marginBottom: '1rem' }}>Select Server</h3>
-        <div style={{ position: 'relative' }}>
-          <button
-            onClick={() => setGuildMenuOpen(!guildMenuOpen)}
-            disabled={loadingGuilds}
+        {message.text ? (
+          <div
+            className="card"
             style={{
-              width: '100%',
-              padding: '0.75rem 1rem',
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '0.5rem',
-              color: '#fff',
-              cursor: loadingGuilds ? 'not-allowed' : 'pointer',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              textAlign: 'left'
+              marginBottom: '1rem',
+              borderColor: message.type === 'success' ? 'rgba(255,255,255,0.35)' : 'rgba(255,100,100,0.6)',
+              background: message.type === 'success' ? 'rgba(255,255,255,0.07)' : 'rgba(255,100,100,0.12)'
             }}
           >
-            <span>{loadingGuilds ? 'Loading...' : selectedGuild?.name || 'Select a server'}</span>
-            <span>{guildMenuOpen ? '▲' : '▼'}</span>
-          </button>
-
-          {guildMenuOpen && !loadingGuilds && (
-            <div
-              style={{
-                position: 'absolute',
-                top: '100%',
-                left: 0,
-                right: 0,
-                marginTop: '0.5rem',
-                background: 'rgba(20, 20, 40, 0.98)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: '0.5rem',
-                maxHeight: '300px',
-                overflowY: 'auto',
-                zIndex: 10,
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)'
-              }}
-            >
-              {guilds.map((guild) => (
-                <div
-                  key={guild.id}
-                  onClick={() => {
-                    setGuildId(guild.id);
-                    setGuildMenuOpen(false);
-                  }}
-                  style={{
-                    padding: '0.75rem 1rem',
-                    cursor: 'pointer',
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-                    background: guild.id === guildId ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
-                    transition: 'background 0.2s'
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)')}
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.background = guild.id === guildId ? 'rgba(255, 255, 255, 0.1)' : 'transparent')
-                  }
-                >
-                  {guild.name}
-                </div>
-              ))}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <img
+                src={logo}
+                alt="TradeUp"
+                style={{ width: '28px', height: '28px', borderRadius: '6px' }}
+              />
+              <span>{message.text}</span>
             </div>
-          )}
-        </div>
-      </div>
+          </div>
+        ) : null}
 
-      {guildId && (
-        <>
-          <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
+        <div className="card" style={{ marginBottom: '1rem' }}>
+          <div style={{ position: 'relative', minWidth: '320px' }}>
             <button
-              onClick={() => setShowCreateModal(true)}
-              className="action-button"
+              type="button"
+              className="btn"
+              disabled={loadingGuilds}
+              onClick={() => setGuildMenuOpen((prev) => !prev)}
               style={{
-                padding: '0.75rem 1.5rem',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                border: 'none',
-                borderRadius: '0.5rem',
+                width: '100%',
+                borderWidth: '1px',
+                background: 'rgba(255,255,255,0.06)',
                 color: '#fff',
-                cursor: 'pointer',
-                fontWeight: '600'
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '10px 12px'
               }}
             >
+              <span>
+                {selectedGuild ? `${selectedGuild.name} (${selectedGuild.memberCount})` : 'Select Guild'}
+              </span>
+              <span style={{ opacity: 0.75 }}>{guildMenuOpen ? '▲' : '▼'}</span>
+            </button>
+
+            {guildMenuOpen ? (
+              <div
+                className="card"
+                style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 6px)',
+                  left: 0,
+                  right: 0,
+                  zIndex: 30,
+                  padding: '8px',
+                  maxHeight: '260px',
+                  overflowY: 'auto'
+                }}
+              >
+                <div style={{ display: 'grid', gap: '6px' }}>
+                  {guilds.map((guild) => (
+                    <button
+                      key={guild.id}
+                      type="button"
+                      onClick={() => {
+                        setGuildId(guild.id);
+                        setGuildMenuOpen(false);
+                      }}
+                      className="btn"
+                      style={{
+                        width: '100%',
+                        background: guild.id === guildId ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.04)',
+                        borderColor: guild.id === guildId ? 'rgba(255,255,255,0.40)' : 'rgba(255,255,255,0.12)',
+                        padding: '8px 10px',
+                        textAlign: 'left',
+                        fontSize: '0.95rem'
+                      }}
+                    >
+                      {guild.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        {guildId && (
+        <>
+          <div style={{ display: 'flex', gap: '10px', marginBottom: '1rem', flexWrap: 'wrap' }}>
+            <button type="button" className="btn" onClick={() => setShowCreateModal(true)}>
               Create Channel/Category
             </button>
-            <button
-              onClick={bulkHideChannels}
-              className="action-button"
-              style={{
-                padding: '0.75rem 1.5rem',
-                background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-                border: 'none',
-                borderRadius: '0.5rem',
-                color: '#fff',
-                cursor: 'pointer',
-                fontWeight: '600'
-              }}
-            >
+            <button type="button" className="btn" onClick={bulkHideChannels}>
               Hide All Channels
             </button>
-            <button
-              onClick={bulkShowChannels}
-              className="action-button"
-              style={{
-                padding: '0.75rem 1.5rem',
-                background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-                border: 'none',
-                borderRadius: '0.5rem',
-                color: '#fff',
-                cursor: 'pointer',
-                fontWeight: '600'
-              }}
-            >
+            <button type="button" className="btn" onClick={bulkShowChannels}>
               Show Non-Staff Channels
             </button>
           </div>
 
           {loadingChannels ? (
-            <div className="glass-card" style={{ padding: '2rem', textAlign: 'center' }}>
+            <div className="card" style={{ padding: '2rem', textAlign: 'center' }}>
               Loading channels...
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: permissionsView ? '1fr 1fr' : '1fr', gap: '2rem' }}>
-              <div className="glass-card" style={{ padding: '1.5rem' }}>
-                <h3 style={{ marginBottom: '1.5rem' }}>Channels</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: permissionsView ? '1fr 1fr' : '1fr', gap: '20px' }}>
+              <div className="card">
+                <h3 style={{ marginBottom: '1rem', fontSize: '1.3rem', fontWeight: 700 }}>Channels</h3>
 
                 {categories.length > 0 && (
-                  <div style={{ marginBottom: '2rem' }}>
-                    <h4 style={{ marginBottom: '1rem', color: '#aaa' }}>Categories</h4>
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <h4 style={{ marginBottom: '0.75rem', opacity: 0.7, fontSize: '0.9rem', fontWeight: 600 }}>CATEGORIES</h4>
                     {categories.map((cat) => (
                       <div
                         key={cat.id}
                         style={{
-                          padding: '0.75rem',
-                          marginBottom: '0.5rem',
-                          background: 'rgba(255, 255, 255, 0.03)',
-                          border: '1px solid rgba(255, 255, 255, 0.1)',
-                          borderRadius: '0.5rem',
+                          padding: '10px 12px',
+                          marginBottom: '8px',
+                          background: 'rgba(255, 255, 255, 0.04)',
+                          border: '1px solid rgba(255, 255, 255, 0.12)',
+                          borderRadius: '8px',
                           display: 'flex',
                           justifyContent: 'space-between',
                           alignItems: 'center'
                         }}
                       >
-                        <span style={{ fontWeight: '600', textTransform: 'uppercase', fontSize: '0.9rem' }}>
+                        <span style={{ fontWeight: '600', fontSize: '0.95rem' }}>
                           📁 {cat.name}
                         </span>
                         <button
+                          type="button"
                           onClick={() => deleteChannel(cat.id, cat.name)}
-                          style={{
-                            padding: '0.25rem 0.75rem',
-                            background: 'rgba(244, 67, 54, 0.2)',
-                            border: '1px solid rgba(244, 67, 54, 0.4)',
-                            borderRadius: '0.25rem',
-                            color: '#f44336',
-                            cursor: 'pointer',
-                            fontSize: '0.85rem'
-                          }}
+                          className="btn"
+                          style={{ padding: '5px 12px', fontSize: '0.85rem' }}
                         >
                           Delete
                         </button>
@@ -456,8 +419,8 @@ function ChannelConfigs() {
                 )}
 
                 {textChannels.length > 0 && (
-                  <div style={{ marginBottom: '2rem' }}>
-                    <h4 style={{ marginBottom: '1rem', color: '#aaa' }}>Text Channels</h4>
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <h4 style={{ marginBottom: '0.75rem', opacity: 0.7, fontSize: '0.9rem', fontWeight: 600 }}>TEXT CHANNELS</h4>
                     {textChannels.map((ch) => (
                       <div
                         key={ch.id}
@@ -466,57 +429,46 @@ function ChannelConfigs() {
                           loadChannelPermissions(ch.id);
                         }}
                         style={{
-                          padding: '0.75rem',
-                          marginBottom: '0.5rem',
+                          padding: '10px 12px',
+                          marginBottom: '8px',
                           background:
                             selectedChannel?.id === ch.id
-                              ? 'rgba(102, 126, 234, 0.2)'
-                              : 'rgba(255, 255, 255, 0.03)',
+                              ? 'rgba(255, 255, 255, 0.12)'
+                              : 'rgba(255, 255, 255, 0.04)',
                           border: `1px solid ${
-                            selectedChannel?.id === ch.id ? 'rgba(102, 126, 234, 0.4)' : 'rgba(255, 255, 255, 0.1)'
+                            selectedChannel?.id === ch.id ? 'rgba(255, 255, 255, 0.30)' : 'rgba(255, 255, 255, 0.12)'
                           }`,
-                          borderRadius: '0.5rem',
+                          borderRadius: '8px',
                           cursor: 'pointer',
                           display: 'flex',
                           justifyContent: 'space-between',
-                          alignItems: 'center'
+                          alignItems: 'center',
+                          transition: 'all 0.2s'
                         }}
                       >
-                        <span># {ch.name}</span>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <span style={{ fontSize: '0.95rem' }}># {ch.name}</span>
+                        <div style={{ display: 'flex', gap: '6px' }}>
                           <button
+                            type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               setSelectedChannel(ch);
                               setRenameValue(ch.name);
                               setRenameModal(true);
                             }}
-                            style={{
-                              padding: '0.25rem 0.75rem',
-                              background: 'rgba(66, 165, 245, 0.2)',
-                              border: '1px solid rgba(66, 165, 245, 0.4)',
-                              borderRadius: '0.25rem',
-                              color: '#42a5f5',
-                              cursor: 'pointer',
-                              fontSize: '0.85rem'
-                            }}
+                            className="btn"
+                            style={{ padding: '5px 12px', fontSize: '0.85rem' }}
                           >
                             Rename
                           </button>
                           <button
+                            type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               deleteChannel(ch.id, ch.name);
                             }}
-                            style={{
-                              padding: '0.25rem 0.75rem',
-                              background: 'rgba(244, 67, 54, 0.2)',
-                              border: '1px solid rgba(244, 67, 54, 0.4)',
-                              borderRadius: '0.25rem',
-                              color: '#f44336',
-                              cursor: 'pointer',
-                              fontSize: '0.85rem'
-                            }}
+                            className="btn"
+                            style={{ padding: '5px 12px', fontSize: '0.85rem' }}
                           >
                             Delete
                           </button>
@@ -528,7 +480,7 @@ function ChannelConfigs() {
 
                 {voiceChannels.length > 0 && (
                   <div>
-                    <h4 style={{ marginBottom: '1rem', color: '#aaa' }}>Voice Channels</h4>
+                    <h4 style={{ marginBottom: '0.75rem', opacity: 0.7, fontSize: '0.9rem', fontWeight: 600 }}>VOICE CHANNELS</h4>
                     {voiceChannels.map((ch) => (
                       <div
                         key={ch.id}
@@ -537,57 +489,46 @@ function ChannelConfigs() {
                           loadChannelPermissions(ch.id);
                         }}
                         style={{
-                          padding: '0.75rem',
-                          marginBottom: '0.5rem',
+                          padding: '10px 12px',
+                          marginBottom: '8px',
                           background:
                             selectedChannel?.id === ch.id
-                              ? 'rgba(102, 126, 234, 0.2)'
-                              : 'rgba(255, 255, 255, 0.03)',
+                              ? 'rgba(255, 255, 255, 0.12)'
+                              : 'rgba(255, 255, 255, 0.04)',
                           border: `1px solid ${
-                            selectedChannel?.id === ch.id ? 'rgba(102, 126, 234, 0.4)' : 'rgba(255, 255, 255, 0.1)'
+                            selectedChannel?.id === ch.id ? 'rgba(255, 255, 255, 0.30)' : 'rgba(255, 255, 255, 0.12)'
                           }`,
-                          borderRadius: '0.5rem',
+                          borderRadius: '8px',
                           cursor: 'pointer',
                           display: 'flex',
                           justifyContent: 'space-between',
-                          alignItems: 'center'
+                          alignItems: 'center',
+                          transition: 'all 0.2s'
                         }}
                       >
-                        <span>🔊 {ch.name}</span>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <span style={{ fontSize: '0.95rem' }}>🔊 {ch.name}</span>
+                        <div style={{ display: 'flex', gap: '6px' }}>
                           <button
+                            type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               setSelectedChannel(ch);
                               setRenameValue(ch.name);
                               setRenameModal(true);
                             }}
-                            style={{
-                              padding: '0.25rem 0.75rem',
-                              background: 'rgba(66, 165, 245, 0.2)',
-                              border: '1px solid rgba(66, 165, 245, 0.4)',
-                              borderRadius: '0.25rem',
-                              color: '#42a5f5',
-                              cursor: 'pointer',
-                              fontSize: '0.85rem'
-                            }}
+                            className="btn"
+                            style={{ padding: '5px 12px', fontSize: '0.85rem' }}
                           >
                             Rename
                           </button>
                           <button
+                            type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               deleteChannel(ch.id, ch.name);
                             }}
-                            style={{
-                              padding: '0.25rem 0.75rem',
-                              background: 'rgba(244, 67, 54, 0.2)',
-                              border: '1px solid rgba(244, 67, 54, 0.4)',
-                              borderRadius: '0.25rem',
-                              color: '#f44336',
-                              cursor: 'pointer',
-                              fontSize: '0.85rem'
-                            }}
+                            className="btn"
+                            style={{ padding: '5px 12px', fontSize: '0.85rem' }}
                           >
                             Delete
                           </button>
@@ -605,11 +546,11 @@ function ChannelConfigs() {
               </div>
 
               {permissionsView && selectedChannel && (
-                <div className="glass-card" style={{ padding: '1.5rem' }}>
-                  <h3 style={{ marginBottom: '1rem' }}>
+                <div className="card">
+                  <h3 style={{ marginBottom: '0.75rem', fontSize: '1.3rem', fontWeight: 700 }}>
                     Permissions for #{selectedChannel.name}
                   </h3>
-                  <p style={{ color: '#aaa', marginBottom: '1.5rem', fontSize: '0.9rem' }}>
+                  <p style={{ opacity: 0.7, marginBottom: '1.25rem', fontSize: '0.9rem' }}>
                     Click permissions to toggle (Allow/Deny/Neutral)
                   </p>
 
@@ -619,17 +560,17 @@ function ChannelConfigs() {
                       <div
                         key={role.id}
                         style={{
-                          marginBottom: '1.5rem',
-                          padding: '1rem',
-                          background: 'rgba(255, 255, 255, 0.03)',
-                          border: '1px solid rgba(255, 255, 255, 0.1)',
-                          borderRadius: '0.5rem'
+                          marginBottom: '1.25rem',
+                          padding: '12px',
+                          background: 'rgba(255, 255, 255, 0.04)',
+                          border: '1px solid rgba(255, 255, 255, 0.12)',
+                          borderRadius: '8px'
                         }}
                       >
-                        <h4 style={{ marginBottom: '0.75rem', color: role.color || '#fff' }}>
+                        <h4 style={{ marginBottom: '0.75rem', color: role.color || '#fff', fontSize: '1rem', fontWeight: 600 }}>
                           {role.name}
                         </h4>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
                           {['ViewChannel', 'SendMessages', 'ReadMessageHistory', 'Connect', 'Speak'].map((perm) => {
                             const isAllowed = rolePerms?.allow?.includes(perm);
                             const isDenied = rolePerms?.deny?.includes(perm);
@@ -638,34 +579,33 @@ function ChannelConfigs() {
                             return (
                               <button
                                 key={perm}
+                                type="button"
                                 onClick={() => {
                                   const nextStatus = status === 'neutral' ? 'allow' : status === 'allow' ? 'deny' : 'neutral';
                                   updateChannelPermission(role.id, perm, nextStatus);
                                 }}
+                                className="btn"
                                 style={{
-                                  padding: '0.5rem 1rem',
+                                  padding: '6px 12px',
+                                  fontSize: '0.85rem',
                                   background:
                                     status === 'allow'
-                                      ? 'rgba(76, 175, 80, 0.2)'
+                                      ? 'rgba(76, 175, 80, 0.15)'
                                       : status === 'deny'
-                                      ? 'rgba(244, 67, 54, 0.2)'
-                                      : 'rgba(255, 255, 255, 0.05)',
-                                  border: `1px solid ${
+                                      ? 'rgba(244, 67, 54, 0.15)'
+                                      : 'rgba(255, 255, 255, 0.04)',
+                                  borderColor:
                                     status === 'allow'
-                                      ? 'rgba(76, 175, 80, 0.4)'
+                                      ? 'rgba(76, 175, 80, 0.5)'
                                       : status === 'deny'
-                                      ? 'rgba(244, 67, 54, 0.4)'
-                                      : 'rgba(255, 255, 255, 0.1)'
-                                  }`,
-                                  borderRadius: '0.25rem',
+                                      ? 'rgba(244, 67, 54, 0.5)'
+                                      : 'rgba(255, 255, 255, 0.16)',
                                   color:
                                     status === 'allow'
                                       ? '#4caf50'
                                       : status === 'deny'
                                       ? '#f44336'
-                                      : '#aaa',
-                                  cursor: 'pointer',
-                                  fontSize: '0.85rem'
+                                      : '#fff'
                                 }}
                               >
                                 {perm} {status === 'allow' ? '✓' : status === 'deny' ? '✗' : '○'}
@@ -691,7 +631,7 @@ function ChannelConfigs() {
             left: 0,
             right: 0,
             bottom: 0,
-            background: 'rgba(0, 0, 0, 0.8)',
+            background: 'rgba(0, 0, 0, 0.85)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -700,14 +640,14 @@ function ChannelConfigs() {
           onClick={() => setShowCreateModal(false)}
         >
           <div
-            className="glass-card"
+            className="card"
             style={{ padding: '2rem', maxWidth: '500px', width: '90%' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 style={{ marginBottom: '1.5rem' }}>Create Channel/Category</h3>
+            <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem', fontWeight: 700 }}>Create Channel/Category</h3>
 
             <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', color: '#aaa' }}>Type</label>
+              <label style={{ display: 'block', marginBottom: '0.5rem', opacity: 0.7, fontWeight: 600 }}>Type</label>
               <select
                 value={createType}
                 onChange={(e) => setCreateType(e.target.value)}
@@ -715,9 +655,10 @@ function ChannelConfigs() {
                   width: '100%',
                   padding: '0.75rem',
                   background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '0.5rem',
-                  color: '#fff'
+                  border: '1px solid rgba(255, 255, 255, 0.16)',
+                  borderRadius: '8px',
+                  color: '#fff',
+                  fontSize: '1rem'
                 }}
               >
                 <option value="text">Text Channel</option>
@@ -727,7 +668,7 @@ function ChannelConfigs() {
             </div>
 
             <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', color: '#aaa' }}>Name</label>
+              <label style={{ display: 'block', marginBottom: '0.5rem', opacity: 0.7, fontWeight: 600 }}>Name</label>
               <input
                 type="text"
                 value={createName}
@@ -737,16 +678,17 @@ function ChannelConfigs() {
                   width: '100%',
                   padding: '0.75rem',
                   background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '0.5rem',
-                  color: '#fff'
+                  border: '1px solid rgba(255, 255, 255, 0.16)',
+                  borderRadius: '8px',
+                  color: '#fff',
+                  fontSize: '1rem'
                 }}
               />
             </div>
 
             {createType !== 'category' && (
               <div style={{ marginBottom: '1.5rem' }}>
-                <label style={{ display: 'block', marginBottom: '0.5rem', color: '#aaa' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', opacity: 0.7, fontWeight: 600 }}>
                   Parent Category (Optional)
                 </label>
                 <select
@@ -756,9 +698,10 @@ function ChannelConfigs() {
                     width: '100%',
                     padding: '0.75rem',
                     background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '0.5rem',
-                    color: '#fff'
+                    border: '1px solid rgba(255, 255, 255, 0.16)',
+                    borderRadius: '8px',
+                    color: '#fff',
+                    fontSize: '1rem'
                   }}
                 >
                   <option value="">None</option>
@@ -771,33 +714,15 @@ function ChannelConfigs() {
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: '1rem' }}>
-              <button
-                onClick={createChannel}
-                style={{
-                  flex: 1,
-                  padding: '0.75rem',
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  border: 'none',
-                  borderRadius: '0.5rem',
-                  color: '#fff',
-                  cursor: 'pointer',
-                  fontWeight: '600'
-                }}
-              >
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button type="button" onClick={createChannel} className="btn" style={{ flex: 1 }}>
                 Create
               </button>
               <button
+                type="button"
                 onClick={() => setShowCreateModal(false)}
-                style={{
-                  flex: 1,
-                  padding: '0.75rem',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '0.5rem',
-                  color: '#fff',
-                  cursor: 'pointer'
-                }}
+                className="btn"
+                style={{ flex: 1, background: 'rgba(255,255,255,0.06)' }}
               >
                 Cancel
               </button>
@@ -823,14 +748,14 @@ function ChannelConfigs() {
           onClick={() => setRenameModal(false)}
         >
           <div
-            className="glass-card"
+            className="card"
             style={{ padding: '2rem', maxWidth: '500px', width: '90%' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 style={{ marginBottom: '1.5rem' }}>Rename Channel</h3>
+            <h3 style={{ marginBottom: '1.5rem', fontSize: '1.5rem', fontWeight: 700 }}>Rename Channel</h3>
 
             <div style={{ marginBottom: '1.5rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', color: '#aaa' }}>New Name</label>
+              <label style={{ display: 'block', marginBottom: '0.5rem', opacity: 0.7, fontWeight: 600 }}>New Name</label>
               <input
                 type="text"
                 value={renameValue}
@@ -840,40 +765,23 @@ function ChannelConfigs() {
                   width: '100%',
                   padding: '0.75rem',
                   background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '0.5rem',
-                  color: '#fff'
+                  border: '1px solid rgba(255, 255, 255, 0.16)',
+                  borderRadius: '8px',
+                  color: '#fff',
+                  fontSize: '1rem'
                 }}
               />
             </div>
 
-            <div style={{ display: 'flex', gap: '1rem' }}>
-              <button
-                onClick={renameChannel}
-                style={{
-                  flex: 1,
-                  padding: '0.75rem',
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  border: 'none',
-                  borderRadius: '0.5rem',
-                  color: '#fff',
-                  cursor: 'pointer',
-                  fontWeight: '600'
-                }}
-              >
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button type="button" onClick={renameChannel} className="btn" style={{ flex: 1 }}>
                 Rename
               </button>
               <button
+                type="button"
                 onClick={() => setRenameModal(false)}
-                style={{
-                  flex: 1,
-                  padding: '0.75rem',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  borderRadius: '0.5rem',
-                  color: '#fff',
-                  cursor: 'pointer'
-                }}
+                className="btn"
+                style={{ flex: 1, background: 'rgba(255,255,255,0.06)' }}
               >
                 Cancel
               </button>
@@ -881,7 +789,8 @@ function ChannelConfigs() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }
 
